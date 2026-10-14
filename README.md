@@ -6,4 +6,6 @@ Data snapshot: fires 2026-10-07 to 2026-10-14, compiled 2026-10-14. Company figu
 
 The Overview, Conglomerates and Fires pages include cards from WALHI's October 2026 fire-actor report ("Siapa di Balik Api?"), with a cross-check of the companies it names against this dataset.
 
-Sources: WALHI Eksekutif Nasional (2026), Global Forest Watch (oil palm and wood-fibre concessions), Global Forest Watch logging concessions, ESDM Geoportal (mining and quarry licences, PPKH), Hansen/UMD tree cover loss, NASA FIRMS and GIBS, CAMS via Open-Meteo, geoBoundaries, company filings and press/NGO reports (see the company profiles).
+A Forest change page shows real satellite mosaics (Landsat GLS 2000–2010, Sentinel-2 cloudless 2016–2025) of Sumatra, Borneo, Java, Sulawesi and Papua with a year slider.
+
+Sources: WALHI Eksekutif Nasional (2026), Global Forest Watch (oil palm and wood-fibre concessions), Global Forest Watch logging concessions, ESDM Geoportal (mining and quarry licences, PPKH), Hansen/UMD tree cover loss, NASA FIRMS and GIBS, CAMS via Open-Meteo, geoBoundaries, USGS/NASA Global Land Survey via Esri, Sentinel-2 cloudless by EOX (CC BY-NC-SA 4.0), GFW tree cover statistics, company filings and press/NGO reports (see the company profiles).
