@@ -17,7 +17,7 @@
 <body>
 <main class="wrap">
   <section class="head">
-    <span class="eyebrow">Indonesia · palm oil · pulp &amp; paper · coal</span>
+    <span class="eyebrow">Indonesia · plantations · logging · mining · quarrying</span>
     <h1>Who holds the land, and where it is burning</h1>
     <p class="lede" id="lede"></p>
   </section>
@@ -63,7 +63,7 @@
     </article>
   </section>
 
-  <p class="note">Sources: company filings and research compiled Oct 2026 (see Companies page and the Excel workbook); concession boundaries from Global Forest Watch (oil palm, wood fibre) and the ESDM Geoportal (coal IUP/IUPK/PKP2B); fires from NASA FIRMS; haze from CAMS via Open-Meteo. A detection inside a licence shows where fire occurred, not who caused it.</p>
+  <p class="note">Sources: company filings and research compiled Oct 2026 (see Companies page and the Excel workbook); concession boundaries from Global Forest Watch (oil palm, wood fibre, natural-forest logging) and the ESDM Geoportal (coal, metal and quarry IUP/IUPK/PKP2B licences; forest-area use permits); fires from NASA FIRMS; haze from CAMS via Open-Meteo. A detection inside a licence shows where fire occurred, not who caused it.</p>
 </main>
 <script>
 LW.nav("index.html");
@@ -73,16 +73,17 @@ const CBY = Object.fromEntries(CONC.map((f) => [f.properties.id, f.properties]))
 const CO = Object.fromEntries(COS.map((c) => [c.id, c]));
 
 // KPIs
-const areaBy = { P: 0, W: 0, C: 0 };
-CONC.forEach((f) => (areaBy[f.properties.s] += f.properties.a || 0));
+const FAM = (code) => SECTORS[CODE2SECTOR[code]].family;
+const areaBy = {}, nBy = {};
+CONC.forEach((f) => { const k = FAM(f.properties.s); areaBy[k] = (areaBy[k] || 0) + (f.properties.a || 0); nBy[k] = (nBy[k] || 0) + 1; });
 const inConc = F.rows.filter((r) => r[9]).length;
 const worst = window.AQ.cells.reduce((a, c) => (c[2] > a[2] ? c : a));
 const worstCat = LW.pmCat(worst[2]);
 const kp = [
-  [COS.length, "Companies profiled", ["Palm Oil", "Pulp & Paper", "Coal Mining"].map((s) => COS.filter((c) => c.sector === s).length + " " + SECTORS[s].label.split(" ")[0].toLowerCase()).join(" · ")],
-  [fmt.ha(areaBy.P), "Mapped oil palm licences", CONC.filter((f) => f.properties.s === "P").length.toLocaleString() + " polygons"],
-  [fmt.ha(areaBy.W), "Mapped wood-fibre licences", CONC.filter((f) => f.properties.s === "W").length + " polygons"],
-  [fmt.ha(areaBy.C), "Mapped coal licences", CONC.filter((f) => f.properties.s === "C").length + " polygons"],
+  [COS.length, "Companies profiled", `across ${new Set(COS.map((c) => c.sector)).size} land-use sectors`],
+  [fmt.ha(areaBy.Plantations), "Plantation licences", "palm oil, pulpwood · " + fmt.n(nBy.Plantations) + " polygons"],
+  [fmt.ha(areaBy["Mining & quarrying"]), "Mining & quarry licences", "coal, metals, quarries · " + fmt.n(nBy["Mining & quarrying"]) + " polygons"],
+  [fmt.ha(areaBy.Logging), "Natural-forest logging", fmt.n(nBy.Logging) + " concessions"],
   [fmt.n(F.rows.length), "Fire detections, 7 days", `${(100 * inConc / F.rows.length).toFixed(0)}% inside mapped licences`, true],
   [Math.round(worst[2]) + " µg/m³", "Peak modelled PM2.5", worstCat[1] + " · " + worst[0] + "°, " + worst[1] + "°", worst[2] > 55],
 ];
@@ -95,7 +96,7 @@ const provTop = Object.entries(F.rows.reduce((a, r) => ((a[F.provs[r[8]]] = (a[F
 const topCo = Object.entries(fireCo).sort((a, b) => b[1] - a[1])[0];
 document.getElementById("lede").textContent =
   `${fmt.n(F.rows.length)} satellite fire detections were recorded across Indonesia between ${S.fire_start} and ${S.fire_end}, ` +
-  `${(100 * provTop[0][1] / F.rows.length).toFixed(0)}% of them in ${provTop[0][0]}. ${fmt.n(inConc)} landed inside mapped palm, pulpwood or coal licences; ` +
+  `${(100 * provTop[0][1] / F.rows.length).toFixed(0)}% of them in ${provTop[0][0]}. ${fmt.n(inConc)} landed inside mapped plantation, logging, mining or quarry licences; ` +
   `the most inside any one company's land was ${CO[topCo[0]].short} (${fmt.n(topCo[1])}).`;
 
 LW.onRender(() => {
@@ -103,9 +104,9 @@ LW.onRender(() => {
   const cats = F.dates.map((d) => d.slice(5));
   const mk = (name, color, test) => ({ name, color, values: F.dates.map((_, i) => F.rows.filter((r) => r[2] === i && test(r)).length) });
   const series = [
-    mk("Oil palm licences", sectorColor("Palm Oil"), (r) => r[9] && CBY[r[9]].s === "P"),
-    mk("Wood-fibre licences", sectorColor("Pulp & Paper"), (r) => r[9] && CBY[r[9]].s === "W"),
-    mk("Coal licences", sectorColor("Coal Mining"), (r) => r[9] && CBY[r[9]].s === "C"),
+    mk("Plantation licences", sectorColor("Palm Oil"), (r) => r[9] && FAM(CBY[r[9]].s) === "Plantations"),
+    mk("Logging concessions", sectorColor("Logging"), (r) => r[9] && FAM(CBY[r[9]].s) === "Logging"),
+    mk("Mining & quarry licences", sectorColor("Coal Mining"), (r) => r[9] && FAM(CBY[r[9]].s) === "Mining & quarrying"),
     mk("Outside mapped licences", LW.css("--muted"), (r) => !r[9]),
   ];
   document.getElementById("lg-daily").innerHTML = series.map((s) => `<span><i class="sw" style="background:${s.color}"></i>${s.name}</span>`).join("");
@@ -131,11 +132,12 @@ document.getElementById("tb-hot").innerHTML = `<thead><tr><th>Licence</th><th>Pr
 
 // island table
 const ISL_ORDER = ["Kalimantan", "Sumatra", "Papua", "Sulawesi", "Java", "Bali & Nusa Tenggara", "Maluku"];
-const isl = Object.fromEntries(ISL_ORDER.map((i) => [i, { P: 0, W: 0, C: 0, n: 0, fires: 0, inside: 0 }]));
-CONC.forEach((f) => { const p = f.properties, o = isl[p.i]; if (o) { o[p.s] += p.a || 0; o.n++; } });
+const ISL_SEC = ["P", "W", "L", "C", "M", "Q"];
+const isl = Object.fromEntries(ISL_ORDER.map((i) => [i, { n: 0, fires: 0, inside: 0, ...Object.fromEntries(ISL_SEC.map((k) => [k, 0])) }]));
+CONC.forEach((f) => { const p = f.properties, o = isl[p.i]; if (o) { o[p.s] = (o[p.s] || 0) + (p.a || 0); o.n++; } });
 F.rows.forEach((r) => { const o = isl[F.isls[r[10]]]; if (o) { o.fires++; if (r[9]) o.inside++; } });
-document.getElementById("tb-isl").innerHTML = `<thead><tr><th>Island group</th><th class="n">Oil palm</th><th class="n">Wood fibre</th><th class="n">Coal</th><th class="n">Licences</th><th class="n">Fire detections</th><th class="n">Inside licences</th></tr></thead><tbody>` +
-  ISL_ORDER.map((i) => { const o = isl[i]; return `<tr><td>${i}</td><td class="n">${fmt.ha(o.P)}</td><td class="n">${fmt.ha(o.W)}</td><td class="n">${fmt.ha(o.C)}</td><td class="n">${fmt.n(o.n)}</td>
+document.getElementById("tb-isl").innerHTML = `<thead><tr><th>Island group</th>${ISL_SEC.map((k) => `<th class="n"><span class="dot ${SECTORS[CODE2SECTOR[k]].key}"></span> ${SECTORS[CODE2SECTOR[k]].label}</th>`).join("")}<th class="n">Licences</th><th class="n">Fire detections</th><th class="n">Inside licences</th></tr></thead><tbody>` +
+  ISL_ORDER.map((i) => { const o = isl[i]; return `<tr><td>${i}</td>${ISL_SEC.map((k) => `<td class="n">${fmt.ha(o[k])}</td>`).join("")}<td class="n">${fmt.n(o.n)}</td>
     <td class="n">${o.fires > 5000 ? `<span class="chip pill-alert">${fmt.n(o.fires)}</span>` : fmt.n(o.fires)}</td><td class="n">${o.fires ? (100 * o.inside / o.fires).toFixed(0) + "%" : "–"}</td></tr>`; }).join("") + "</tbody>";
 
 // haze box

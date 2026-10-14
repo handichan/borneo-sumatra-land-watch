@@ -1,11 +1,17 @@
 // Shared helpers: nav, formatting, sector metadata, tiny SVG charts with hover tooltips.
 (function () {
+  // Seven land-use sectors; order is the display order everywhere. "family" groups them for compact summaries.
   const SECTORS = {
-    "Palm Oil": { key: "palm", code: "P", label: "Palm oil" },
-    "Pulp & Paper": { key: "pulp", code: "W", label: "Pulp & paper" },
-    "Coal Mining": { key: "coal", code: "C", label: "Coal" },
+    "Palm Oil": { key: "palm", code: "P", label: "Palm oil", family: "Plantations" },
+    "Pulp & Paper": { key: "pulp", code: "W", label: "Pulp & paper", family: "Plantations" },
+    "Agriculture & Plantations": { key: "agri", code: "A", label: "Agriculture", family: "Plantations" },
+    "Logging": { key: "log", code: "L", label: "Logging", family: "Logging" },
+    "Coal Mining": { key: "coal", code: "C", label: "Coal", family: "Mining & quarrying" },
+    "Metal Mining": { key: "metal", code: "M", label: "Metal mining", family: "Mining & quarrying" },
+    "Quarrying": { key: "quarry", code: "Q", label: "Quarrying", family: "Mining & quarrying" },
   };
-  const CODE2SECTOR = { P: "Palm Oil", W: "Pulp & Paper", C: "Coal Mining" };
+  const SECTOR_LIST = Object.keys(SECTORS);
+  const CODE2SECTOR = Object.fromEntries(SECTOR_LIST.map((s) => [SECTORS[s].code, s]));
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
   const sectorColor = (s) => css("--" + SECTORS[s].key);
 
@@ -119,11 +125,21 @@
   ];
   const pmCat = (v) => PM.find((p) => v <= p[0]);
 
+  // Sector filter buttons ("All" + each sector present in the data); calls onChange(sectorName or "")
+  function sectorSeg(el, onChange) {
+    const present = new Set((window.COMPANIES || []).map((c) => c.sector));
+    el.innerHTML = `<button id="${el.id}-all" data-s="" aria-pressed="true">All</button>` +
+      SECTOR_LIST.filter((s) => present.has(s)).map((s) => `<button id="${el.id}-${SECTORS[s].key}" data-s="${esc(s)}" aria-pressed="false"><span class="dot ${SECTORS[s].key}"></span> ${SECTORS[s].label}</button>`).join("");
+    el.querySelectorAll("button").forEach((b) => (b.onclick = () => {
+      el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b)); onChange(b.dataset.s);
+    }));
+  }
+
   // re-render charts on resize / theme change
   const renderers = [];
   function onRender(fn) { renderers.push(fn); fn(); }
   let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => renderers.forEach((f) => f()), 150); });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => renderers.forEach((f) => f()));
 
-  window.LW = { go, params, setQuery, SECTORS, CODE2SECTOR, sectorColor, css, fmt, esc, nav, tip, bindTips, hbar, stacked, PM, pmCat, onRender };
+  window.LW = { go, params, setQuery, sectorSeg, SECTOR_LIST, SECTORS, CODE2SECTOR, sectorColor, css, fmt, esc, nav, tip, bindTips, hbar, stacked, PM, pmCat, onRender };
 })();

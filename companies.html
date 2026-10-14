@@ -27,15 +27,10 @@
   <section class="head">
     <span class="eyebrow" id="eyebrow">Companies and groups</span>
     <h1>Company profiles</h1>
-    <p class="lede">Owners, listings, revenue, landbank and track record for the palm oil, pulp and coal companies holding land across Indonesia, with most of the land in Kalimantan, Sumatra and Papua. "Mapped" figures come from licence polygons; "reported" figures come from company disclosures and research.</p>
+    <p class="lede">Owners, listings, revenue, landbank and track record for the companies holding land across Indonesia: plantations (palm oil, pulpwood, other crops), natural-forest logging, coal and metal mining, and quarrying. "Mapped" figures come from licence polygons; "reported" figures come from company disclosures and research.</p>
   </section>
   <div class="controls">
-    <div class="seg" id="seg" role="group" aria-label="Sector">
-      <button id="s-all" aria-pressed="true" data-s="">All</button>
-      <button id="s-palm" aria-pressed="false" data-s="Palm Oil">Palm oil</button>
-      <button id="s-pulp" aria-pressed="false" data-s="Pulp & Paper">Pulp &amp; paper</button>
-      <button id="s-coal" aria-pressed="false" data-s="Coal Mining">Coal</button>
-    </div>
+    <div class="seg" id="seg" role="group" aria-label="Sector"></div>
     <input type="search" id="q" placeholder="Search company, owner, ticker, province" aria-label="Search companies">
     <span class="chip" id="count"></span>
   </div>
@@ -115,9 +110,7 @@ function select(id) {
     <div class="src"><h3>Sources</h3>${(c.sources || []).map((u) => /^https?:/.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a>` : `<span class="note">${esc(u)}</span>`).join("")}</div>
   </div>`;
 }
-document.querySelectorAll("#seg button").forEach((b) => (b.onclick = () => {
-  sector = b.dataset.s; document.querySelectorAll("#seg button").forEach((x) => x.setAttribute("aria-pressed", x === b)); renderTable();
-}));
+LW.sectorSeg(document.getElementById("seg"), (s) => { sector = s; renderTable(); });
 document.getElementById("q").oninput = (e) => { q = e.target.value; renderTable(); };
 renderTable();
 select(selId && COS.some((c) => c.id === selId) ? selId : rows()[0].id);

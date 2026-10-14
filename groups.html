@@ -27,12 +27,12 @@
 <main class="wrap">
   <section class="head">
     <span class="eyebrow">Ultimate controllers</span>
-    <h1>Conglomerates across palm, pulp and coal</h1>
+    <h1>Conglomerates across plantations, logging and mining</h1>
     <p class="lede">Several family groups hold land in more than one sector. Sinar Mas, for example, controls oil palm (GAR), pulpwood (APP) and coal (GEMS, Berau). Each card adds up the licences mapped to its companies. Revenue is the sum of listed entities and double-counts parents and subsidiaries.</p>
   </section>
   <article class="panel">
     <header><h2>Mapped licence area by group</h2><p>Top 15 groups · stacked by sector</p></header>
-    <div class="legend"><span><i class="sw palm"></i>Palm oil</span><span><i class="sw pulp"></i>Pulp &amp; paper</span><span><i class="sw coal"></i>Coal</span></div>
+    <div class="legend" id="lg"></div>
     <div class="chart" id="ch"></div>
   </article>
   <div class="controls">
@@ -48,9 +48,10 @@ LW.nav("groups.html");
 const { fmt, esc, SECTORS, sectorColor } = LW;
 const G = {};
 window.COMPANIES.forEach((c) => {
-  const g = (G[c.group] ||= { name: c.group, cos: [], area: { "Palm Oil": 0, "Pulp & Paper": 0, "Coal Mining": 0 }, rev: 0, fires: 0 });
+  const g = (G[c.group] ||= { name: c.group, cos: [], area: Object.fromEntries(LW.SECTOR_LIST.map((s) => [s, 0])), rev: 0, fires: 0 });
   g.cos.push(c); g.area[c.sector] += c.gis_area_ha || 0; g.rev += c.revenue_usd_m || 0; g.fires += c.fires7d || 0;
 });
+document.getElementById("lg").innerHTML = LW.SECTOR_LIST.filter((s) => window.COMPANIES.some((c) => c.sector === s && c.gis_area_ha)).map((s) => `<span><i class="sw ${SECTORS[s].key}"></i>${SECTORS[s].label}</span>`).join("");
 const groups = Object.values(G).map((g) => ({ ...g, total: Object.values(g.area).reduce((a, b) => a + b, 0), sectors: [...new Set(g.cos.map((c) => c.sector))] }))
   .sort((a, b) => b.total - a.total || b.rev - a.rev);
 
