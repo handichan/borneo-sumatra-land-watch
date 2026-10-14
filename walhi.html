@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WALHI Fire Actors · Land Watch</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;650;700;750&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .st { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .st.ok { background: color-mix(in srgb, #1baf7a 18%, transparent); color: #128a5f; }
+  .st.new { background: color-mix(in srgb, #2a78d6 18%, transparent); color: #2a78d6; }
+  .st.add { background: color-mix(in srgb, #4a3aa7 16%, transparent); color: #6a5bd0; }
+  .st.diff { background: color-mix(in srgb, #eb6834 20%, transparent); color: #c4511f; }
+  .st.none { background: var(--surface-2); color: var(--muted); }
+  .people { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .person { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 4px; background: var(--surface); }
+  .person b { font-family: var(--font-display); }
+  .person small { color: var(--muted); }
+  ul.issues { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 0.9rem; color: var(--ink-2); }
+  td.w { max-width: 420px; font-size: 0.82rem; color: var(--ink-2); }
+</style>
+<script src="data/snapshot.js"></script>
+<script src="data/companies.js"></script>
+<script src="data/walhi.js"></script>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="head">
+    <span class="eyebrow">WALHI Eksekutif Nasional · October 2026</span>
+    <h1>Who is behind the fires? WALHI's 2026 actor map, cross-checked</h1>
+    <p class="lede" id="lede"></p>
+  </section>
+  <section class="kpis" id="kpis" aria-label="Key figures from the report"></section>
+
+  <article class="panel">
+    <header><h2>Cross-check against this dataset</h2><p>Each company WALHI names, matched by licence-holder name to the mapped licences here. Hotspot counts are WALHI's high-confidence counts for 2026, not this dashboard's 7-day snapshot.</p></header>
+    <div class="controls" style="margin-bottom:10px">
+      <div class="seg" role="group" aria-label="Status" id="seg"></div>
+    </div>
+    <div class="tbl-wrap" style="max-height:620px;overflow:auto"><table id="tb-val"></table></div>
+    <p class="note">Consistent: WALHI's group matches ours. New from WALHI: the report gave an owner we lacked or overturned ours, and the dataset now uses it. Dataset adds owner: WALHI could not identify the owner but our licence data names one. Differs: the two disagree and we kept ours.</p>
+  </article>
+
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>Merauke food &amp; energy estate (PSN)</h2><p>807 hotspots, 1 Jan – 31 Aug 2026</p></header>
+      <div class="chart" id="ch-mer"></div>
+      <p class="note">Six sugar and bioethanol companies account for 133 hotspots, traced to First Resources (Fangiono family) and Wilmar. The other 674 sit in food-estate clusters run directly by the Coordinating Ministry for Food and the Agriculture Ministry; part of the Ilwayab cluster is worked by Jhonlin Group (Haji Isam) under state assignment.</p>
+    </article>
+    <article class="panel">
+      <header><h2>Fire-linked firms by foreign parent</h2><p>From 372 companies WALHI reported to the President</p></header>
+      <div class="chart" id="ch-grp"></div>
+    </article>
+  </section>
+
+  <article class="panel">
+    <header><h2>Politically exposed people</h2><p>Figures close to the President in the ownership or management of three companies with 2026 fires</p></header>
+    <div class="people" id="pep"></div>
+  </article>
+
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>Ownership traced to foreign jurisdictions</h2><p>Table 3 of the report</p></header>
+      <div class="tbl-wrap"><table id="tb-for"></table></div>
+    </article>
+    <article class="panel">
+      <header><h2>Burns verified in the field</h2><p>WALHI regional offices, Sentinel-2 checks</p></header>
+      <div class="tbl-wrap"><table id="tb-field"></table></div>
+    </article>
+  </section>
+
+  <article class="panel">
+    <header><h2>Caveats in the report itself</h2><p>Found while transcribing; check before citing</p></header>
+    <ul class="issues" id="issues"></ul>
+    <p class="note" id="src"></p>
+  </article>
+</main>
+<script>
+LW.nav("walhi.html");
+const { fmt, esc } = LW;
+const W = window.WALHI, S = W.stats, CO = Object.fromEntries(window.COMPANIES.map((c) => [c.id, c]));
+document.getElementById("lede").textContent = `WALHI overlaid high-confidence hotspots on plantation and forestry licences and traced who owns the 30 worst-hit companies. ` +
+  `About half of Indonesia's ${fmt.n(S.hotspots_jan_sep_2026)} hotspots between January and September 2026 fell inside company licences. ` +
+  `The report finds the same corporate groups (First Resources, Sinar Mas, Wilmar) recurring across many licence holders, foreign or offshore owners behind nine of them, and people close to the President behind three.`;
+document.getElementById("kpis").innerHTML = [
+  [fmt.n(S.hotspots_jan_sep_2026), "Hotspots, Jan–Sep 2026", "high confidence (≥80%)", true],
+  [fmt.n(S.hotspots_in_concessions_jan_7sep), "Inside company licences", `${S.palm_companies_with_hotspots} palm + ${S.pbph_companies_with_hotspots} forestry firms, to 7 Sep`],
+  [fmt.n(S.kalbar_hotspots), "West Kalimantan", `Central Kalimantan ${fmt.n(S.kalteng_hotspots)}`],
+  [fmt.n(S.merauke_psn_hotspots), "Merauke PSN estate", `${S.merauke_state_cluster_hotspots} in state-run clusters`, true],
+  [S.malaysia_linked + S.singapore_linked, "Firms with Malaysian or Singaporean parents", `${S.singapore_linked} Singapore · ${S.malaysia_linked} Malaysia`],
+  [S.unidentified, "Top-30 owners WALHI could not identify", `${S.affiliations_identified} traced`],
+].map(([v, l, s, a]) => `<div class="kpi${a ? " alert" : ""}"><span class="v">${v}</span><span class="l">${l}</span><span class="s">${s}</span></div>`).join("");
+
+const STC = { "consistent": "ok", "new from WALHI": "new", "dataset adds owner": "add", "differs": "diff", "unattributed in both": "none", "not in mapped licences": "none" };
+const V = W.validation;
+let filt = "";
+const seg = document.getElementById("seg");
+seg.innerHTML = [["", `All (${V.length})`], ...Object.keys(STC).map((k) => [k, `${k[0].toUpperCase() + k.slice(1)} (${V.filter((r) => r.status === k).length})`])]
+  .map(([k, l]) => `<button data-k="${k}" aria-pressed="${k === ""}">${l}</button>`).join("");
+seg.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; filt = b.dataset.k; seg.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b)); val(); };
+function val() {
+  const R = V.filter((r) => !filt || r.status === filt);
+  document.getElementById("tb-val").innerHTML = `<thead><tr><th>Company (WALHI)</th><th>List</th><th class="n">WALHI hotspots</th><th>WALHI group / owner</th><th>Our group</th><th class="n">Mapped area</th><th class="n">Our fires, 7 d</th><th>Status</th><th>Note</th></tr></thead><tbody>` +
+    R.map((r) => {
+      const link = r.conc_ids.length ? `<a href="map.html?conc=${r.conc_ids[0]}">${esc(r.name)}</a>` : esc(r.name);
+      const cos = r.cids.map((id) => CO[id] ? `<a href="companies.html?id=${id}">${esc(CO[id].short)}</a>` : "").join(", ");
+      return `<tr><td><b>${link}</b><br><small class="note">${esc(r.province)}</small></td><td style="font-size:.8rem">${esc(r.src)}</td>
+        <td class="n">${r.hotspots == null ? "–" : fmt.n(r.hotspots)}<br><small class="note">${esc(r.period)}</small></td><td class="w">${esc(r.walhi_group) || "–"}</td>
+        <td class="w">${esc(r.our_group) || "–"}${cos ? "<br>" + cos : ""}</td><td class="n">${r.area_ha ? fmt.ha(r.area_ha) : "–"}</td><td class="n">${r.conc_ids.length ? fmt.n(r.fires7d) : "–"}</td>
+        <td><span class="st ${STC[r.status]}">${esc(r.status)}</span></td><td class="w">${esc(r.note)}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+val();
+
+LW.onRender(() => {
+  const mer = W.merauke.map((r) => ({ label: r.name.replace(/^PT /, ""), value: r.hotspots, color: r.type === "PSN Food Estate" ? LW.css("--muted") : (r.group === "Wilmar" ? "#2a78d6" : "#eb6834"),
+    tip: `<b>${esc(r.name)}</b><br>${esc(r.group)} · ${r.type}<br>${r.hotspots} hotspots` }));
+  LW.hbar(document.getElementById("ch-mer"), mer, { labelW: 210 });
+  const gc = W.group_counts.map((r) => ({ label: r.group, value: r.firms, color: r.origin === "Malaysia" ? "#1baf7a" : "#2a78d6", tip: `<b>${esc(r.group)}</b><br>${r.origin}<br>${r.firms} firms` }));
+  LW.hbar(document.getElementById("ch-grp"), gc, { labelW: 210 });
+});
+
+document.getElementById("pep").innerHTML = W.pep.map((p) => `<div class="person"><b>${esc(p.person)}</b><small>${esc(p.political_role)}</small><span>${esc(p.corporate_role)}</span><span class="chip" style="justify-self:start">${esc(p.company)}</span></div>`).join("");
+document.getElementById("tb-for").innerHTML = `<thead><tr><th>Company</th><th>Owner / parent</th><th>Jurisdiction</th></tr></thead><tbody>` +
+  W.foreign.map((r) => `<tr><td><b>${esc(r.name)}</b></td><td class="w">${esc(r.owner)}</td><td>${esc(r.jurisdiction)}</td></tr>`).join("") + "</tbody>";
+document.getElementById("tb-field").innerHTML = `<thead><tr><th>Company</th><th>Group</th><th class="n">Burned</th><th>Finding</th></tr></thead><tbody>` +
+  W.field.map((r) => `<tr><td><b>${esc(r.name)}</b><br><small class="note">${esc(r.province)}</small></td><td>${esc(r.group || "–")}</td><td class="n">${r.burned_ha ? fmt.n(r.burned_ha) + " ha" : "–"}</td><td class="w">${esc(r.finding)}</td></tr>`).join("") + "</tbody>";
+document.getElementById("issues").innerHTML = W.issues.map((t) => `<li>${esc(t)}</li>`).join("");
+document.getElementById("src").textContent = `Source: ${W.source}. Hotspot counts, ownership and political links are WALHI's findings as published; this page does not independently verify them.`;
+</script>
+</body>
+</html>

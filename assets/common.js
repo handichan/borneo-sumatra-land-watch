@@ -30,13 +30,13 @@
   const setQuery = (q) => (SHELL ? SHELL.setQuery(document.documentElement.dataset.page, q) : history.replaceState(null, "", q));
   if (SHELL) document.addEventListener("click", (e) => {
     const a = e.target.closest && e.target.closest("a[href]");
-    if (a && /^(index|companies|groups|map|fires)\.html/.test(a.getAttribute("href"))) { e.preventDefault(); go(a.getAttribute("href")); }
+    if (a && /^(index|companies|groups|map|fires|walhi)\.html/.test(a.getAttribute("href"))) { e.preventDefault(); go(a.getAttribute("href")); }
   });
 
   function nav(active) {
     document.documentElement.dataset.page = active.replace(".html", "");
     if (SHELL) return;
-    const pages = [["index.html", "Overview"], ["companies.html", "Companies"], ["groups.html", "Conglomerates"], ["map.html", "Map"], ["fires.html", "Fires & haze"]];
+    const pages = [["index.html", "Overview"], ["companies.html", "Companies"], ["groups.html", "Conglomerates"], ["map.html", "Map"], ["fires.html", "Fires & haze"], ["walhi.html", "WALHI 2026"]];
     const s = window.SNAPSHOT || {};
     const el = document.createElement("header");
     el.className = "nav";

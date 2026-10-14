@@ -78,6 +78,7 @@
       <select id="isl"><option value="">All of Indonesia</option></select>
       <label class="tg"><input type="checkbox" id="l-pts" checked><span><i class="dot" style="background:var(--ink-2);box-shadow:0 0 0 2px var(--surface)"></i> Named subsidiaries (approx. location)</span><small id="n-pts"></small></label>
       <label class="tg"><input type="checkbox" id="l-ppkh"><span><i class="fill-sw" style="border-color:#8d5524;border-style:dashed;background:transparent"></i> Forest-area use permits (PPKH)</span><small id="n-ppkh"></small></label>
+      <label class="tg"><input type="checkbox" id="l-walhi"><span><i class="fill-sw" style="border-color:#d1001f;border-width:3px;background:transparent"></i> Named in WALHI 2026 fire report</span><small id="n-walhi"></small></label>
       <label class="tg"><input type="checkbox" id="l-tcl"><span><i class="fill-sw" style="border-color:#e0245e;background:color-mix(in srgb,#e0245e 50%,transparent)"></i> Tree cover loss 2001–2024</span><small>UMD</small></label>
       <label class="tg"><input type="checkbox" id="l-prov" checked><span>Province borders</span><small></small></label>
     </section>
@@ -136,6 +137,7 @@ document.getElementById("sec-toggles").innerHTML = SEC_ON.map((s) => { const k =
   return `<label class="tg"><input type="checkbox" id="l-${k}" checked><span><i class="fill-sw" style="border-color:var(--${k});background:color-mix(in srgb,var(--${k}) 35%,transparent)"></i> ${LABEL[s]}</span><small>${n ? n.toLocaleString() : "points"}</small></label>`; }).join("");
 const PPKH = window.PPKH;
 document.getElementById("n-ppkh").textContent = PPKH.features.length.toLocaleString();
+document.getElementById("n-walhi").textContent = CONC.features.filter((f) => f.properties.ws).length.toLocaleString();
 const fireGeo = { type: "FeatureCollection", features: F.rows.map((r, i) => ({ type: "Feature", id: i, geometry: { type: "Point", coordinates: [r[1], r[0]] },
   properties: { d: r[2], t: r[3], s: r[4], c: r[5], f: r[6], n: r[7], p: F.provs[r[8]], i: F.isls[r[10]], k: r[9] || "" } })) };
 const lastDay = F.dates.length - 1;
@@ -230,6 +232,7 @@ const map = new maplibregl.Map({
       { id: "conc-line", type: "line", source: "conc", paint: { "line-color": colorBySector, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.4, 9, 1.6] } },
       { id: "ppkh-fill", type: "fill", source: "ppkh", layout: { visibility: "none" }, paint: { "fill-color": "#8d5524", "fill-opacity": 0.12 } },
       { id: "ppkh-line", type: "line", source: "ppkh", layout: { visibility: "none" }, paint: { "line-color": "#b0773a", "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 9, 1.8], "line-dasharray": [2, 1.5] } },
+      { id: "walhi", type: "line", source: "conc", filter: ["has", "w"], layout: { visibility: "none" }, paint: { "line-color": "#d1001f", "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1.6, 9, 3.5] } },
       { id: "prov", type: "line", source: "prov", paint: { "line-color": "#6b7470", "line-width": 0.8, "line-dasharray": [3, 2] } },
       { id: "live", type: "raster", source: "live", layout: { visibility: "none" } },
       { id: "fires", type: "circle", source: "fires", paint: {
@@ -286,7 +289,7 @@ function apply() {
   map.setFilter("conc-fill", cf); map.setFilter("conc-line", cf);
   map.setFilter("fires", fireFilter());
   map.setFilter("pts", ptsFilter()); vis("pts", $("l-pts").checked);
-  vis("ppkh-fill", $("l-ppkh").checked); vis("ppkh-line", $("l-ppkh").checked); vis("tcl", $("l-tcl").checked);
+  vis("ppkh-fill", $("l-ppkh").checked); vis("ppkh-line", $("l-ppkh").checked); vis("tcl", $("l-tcl").checked); vis("walhi", $("l-walhi").checked);
   vis("fires", $("l-fire").checked); vis("prov", $("l-prov").checked); vis("pm", $("l-pm").checked); PMIMG.forEach((_, i) => vis("pmimg" + i, $("l-pm").checked));
   vis("aod", $("l-aod").checked); vis("ai", $("l-ai").checked); vis("tc", $("l-tc").checked); vis("live", $("l-live").checked);
   countFires();
@@ -306,7 +309,7 @@ function setDate() {
 }
 
 map.on("load", () => {
-  [...SEC_ON.map((s) => "l-" + SECTORS[s].key), "l-ppkh", "l-tcl", "o-attr", "l-prov", "l-fire", "o-conf", "o-inside", "d0", "d1", "l-pm", "l-aod", "l-ai", "l-tc", "l-live", "l-pts"].forEach((id) => $(id).addEventListener("change", apply));
+  [...SEC_ON.map((s) => "l-" + SECTORS[s].key), "l-ppkh", "l-walhi", "l-tcl", "o-attr", "l-prov", "l-fire", "o-conf", "o-inside", "d0", "d1", "l-pm", "l-aod", "l-ai", "l-tc", "l-live", "l-pts"].forEach((id) => $(id).addEventListener("change", apply));
   $("isl").onchange = () => { const v = $("isl").value; if (v) fitTo((p) => p.i === v); else map.fitBounds([[95, -11], [141, 6]], { padding: 16 }); apply(); };
   coSel.onchange = () => { if (coSel.value) { grpSel.value = ""; fitTo((p) => p.cid === coSel.value); } apply(); };
   grpSel.onchange = () => { if (grpSel.value) { coSel.value = ""; fitTo((p) => p.gg === grpSel.value); } apply(); };
@@ -318,7 +321,7 @@ map.on("load", () => {
   if (document.documentElement.dataset.theme === "dark" || (matchMedia("(prefers-color-scheme: dark)").matches && document.documentElement.dataset.theme !== "light")) $("bm-dark").click();
   const pc = PARAMS.get("company"), pk = PARAMS.get("conc");
   if (pc && CO[pc]) { coSel.value = pc; fitTo((p) => p.cid === pc); }
-  if (pk) { const f = CONC.features.find((x) => x.properties.id === pk); if (f) { highlight(pk); fitTo((p) => p.id === pk); } }
+  if (pk) { const f = CONC.features.find((x) => x.properties.id === pk); if (f) { highlight(pk); fitTo((p) => p.id === pk); if (f.properties.ws) $("l-walhi").checked = true; } }
   apply();
 });
 
@@ -349,7 +352,7 @@ map.on("click", (e) => {
     html += `<div class="pp"${html ? ' style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px"' : ""}><h4><span class="dot ${SECTORS[CODE2SECTOR[p.s]].key}"></span> ${esc(p.n)}</h4>
       <dl><dt>Holder</dt><dd>${esc(p.c)}</dd><dt>Company</dt><dd>${p.cid ? `<a href="companies.html?id=${p.cid}">${esc(p.cn)}</a>` : '<span class="na">not in research set</span>'}</dd>
       <dt>Group</dt><dd>${esc(p.gg) || "–"}</dd><dt>Licence</dt><dd>${esc(p.l)}${p.v ? "<br>" + esc(p.v) : ""}</dd><dt>Area</dt><dd>${fmt.n(p.a)} ha</dd><dt>Province</dt><dd>${esc(p.pr)}</dd>
-      <dt>Fires 7 d</dt><dd>${fmt.n(p.f)}</dd><dt>Source</dt><dd style="font-size:.75rem">${esc(p.src)}</dd></dl></div>`;
+      <dt>Fires 7 d</dt><dd>${fmt.n(p.f)}</dd>${p.ws ? `<dt>WALHI 2026</dt><dd>${p.w ? fmt.n(p.w) + " hotspots · " : ""}${esc(p.ws)} <a href="walhi.html">›</a></dd>` : ""}<dt>Source</dt><dd style="font-size:.75rem">${esc(p.src)}</dd></dl></div>`;
   } else highlight("");
   if (pk) {
     const p = pk.properties;

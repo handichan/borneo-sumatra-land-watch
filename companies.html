@@ -20,6 +20,7 @@
 </style>
 <script src="data/snapshot.js"></script>
 <script src="data/companies.js"></script>
+<script src="data/walhi.js"></script>
 <script src="assets/common.js"></script>
 </head>
 <body>
@@ -42,6 +43,11 @@
   </section>
 </main>
 <script>
+function walhiBox(c) {
+  const R = (window.WALHI ? window.WALHI.validation : []).filter((r) => r.cids.includes(c.id));
+  if (!R.length) return "";
+  return `<div class="callout"><h3>Named in WALHI's 2026 fire-actor report</h3><ul style="margin:0;padding-left:18px">${R.map((r) => `<li>${LW.esc(r.name)}: ${r.hotspots == null ? "field-verified burn" : LW.fmt.n(r.hotspots) + " hotspots (" + r.period + ")"} · ${LW.esc(r.src)}</li>`).join("")}</ul><p class="note" style="margin:6px 0 0"><a href="walhi.html">See the cross-check</a></p></div>`;
+}
 LW.nav("companies.html");
 document.getElementById("eyebrow").textContent = window.COMPANIES.length + " companies and groups";
 const { fmt, esc, SECTORS } = LW;
@@ -104,6 +110,7 @@ function select(id) {
       <dt>No-deforestation policy</dt><dd>${esc(c.ndpe_policy) || "–"}</dd>
     </dl>
     ${c.fire_history ? `<div class="callout"><h3>Fire record</h3><p>${esc(c.fire_history)}</p></div>` : ""}
+    ${walhiBox(c)}
     ${para("Controversies and legal record", c.controversies)}
     ${owners ? `<div><h3>Shareholders</h3><table>${owners}</table></div>` : ""}
     ${subs ? `<div><h3>Named subsidiaries / mines</h3><table class="subs"><thead><tr><th>Name</th><th>Province</th><th class="n">ha</th></tr></thead>${subs}</table></div>` : ""}
