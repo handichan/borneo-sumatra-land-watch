@@ -48,6 +48,7 @@
 <script src="data/fires.js"></script>
 <script src="data/aq.js"></script>
 <script src="data/provinces.js"></script>
+<script src="data/points.js"></script>
 <script src="assets/common.js"></script>
 </head>
 <body>
@@ -74,6 +75,9 @@
       <select id="co"><option value="">All companies</option></select>
       <label for="grp" class="note">Conglomerate group</label>
       <select id="grp"><option value="">All groups</option></select>
+      <label for="isl" class="note">Island group</label>
+      <select id="isl"><option value="">All of Indonesia</option></select>
+      <label class="tg"><input type="checkbox" id="l-pts" checked><span><i class="dot" style="background:var(--ink-2);box-shadow:0 0 0 2px var(--surface)"></i> Named subsidiaries (approx. location)</span><small id="n-pts"></small></label>
       <label class="tg"><input type="checkbox" id="l-prov" checked><span>Province borders</span><small></small></label>
     </section>
     <section>
@@ -105,7 +109,7 @@
     </section>
     <p class="note">Boundaries: Global Forest Watch (oil palm, wood fibre), ESDM Geoportal (coal). Fires: NASA FIRMS. Haze: CAMS via Open-Meteo; NASA GIBS imagery.</p>
   </aside>
-  <div style="position:relative;min-height:0"><div id="map" role="region" aria-label="Map of concessions, fires and haze" style="position:absolute;inset:0"></div><div id="loading" style="position:absolute;left:50%;top:16px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:6px 12px;border-radius:6px;font-size:.85rem">Loading 131k fire points and 3,000 licences…</div></div>
+  <div style="position:relative;min-height:0"><div id="map" role="region" aria-label="Map of concessions, fires and haze" style="position:absolute;inset:0"></div><div id="loading" style="position:absolute;left:50%;top:16px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:6px 12px;border-radius:6px;font-size:.85rem">Loading fire points and licences…</div></div>
 </div>
 <script>
 LW.nav("map.html");
@@ -113,6 +117,11 @@ const { fmt, esc, SECTORS, CODE2SECTOR } = LW;
 const COS = window.COMPANIES, CO = Object.fromEntries(COS.map((c) => [c.id, c]));
 const CONC = window.CONCESSIONS, F = window.FIRES, PARAMS = LW.params();
 const C = { P: "#1baf7a", W: "#2a78d6", C: "#eb6834" };
+const PTS = window.POINTS, PTS_BY = {};
+PTS.features.forEach((f) => { const p = f.properties; PTS_BY[p.cid] = (PTS_BY[p.cid] || 0) + 1; p.cn = CO[p.cid].short; p.gg = CO[p.cid].group; });
+document.getElementById("n-pts").textContent = PTS.features.length;
+const ISLS = ["Kalimantan", "Sumatra", "Papua", "Sulawesi", "Java", "Bali & Nusa Tenggara", "Maluku"];
+document.getElementById("isl").insertAdjacentHTML("beforeend", ISLS.map((i) => `<option>${i}</option>`).join(""));
 
 // ---------- data prep ----------
 CONC.features.forEach((f) => { const p = f.properties; p.cn = p.cid ? CO[p.cid].short : ""; p.gg = p.cid ? CO[p.cid].group : p.g || ""; });
@@ -121,7 +130,7 @@ document.getElementById("n-palm").textContent = nFeat("P").toLocaleString();
 document.getElementById("n-pulp").textContent = nFeat("W").toLocaleString();
 document.getElementById("n-coal").textContent = nFeat("C").toLocaleString();
 const fireGeo = { type: "FeatureCollection", features: F.rows.map((r, i) => ({ type: "Feature", id: i, geometry: { type: "Point", coordinates: [r[1], r[0]] },
-  properties: { d: r[2], t: r[3], s: r[4], c: r[5], f: r[6], n: r[7], p: r[8], k: r[9] || "" } })) };
+  properties: { d: r[2], t: r[3], s: r[4], c: r[5], f: r[6], n: r[7], p: F.provs[r[8]], i: F.isls[r[10]], k: r[9] || "" } })) };
 const lastDay = F.dates.length - 1;
 ["d0", "d1"].forEach((id, j) => { const el = document.getElementById(id); el.innerHTML = F.dates.map((d, i) => `<option value="${i}">${d.slice(5)}</option>`).join(""); el.value = j ? lastDay : 0; });
 
@@ -131,9 +140,9 @@ function aqGeo(cells, step) {
     geometry: { type: "Polygon", coordinates: [[[c[1] - h, c[0] - h], [c[1] + h, c[0] - h], [c[1] + h, c[0] + h], [c[1] - h, c[0] + h], [c[1] - h, c[0] - h]]] },
     properties: { pm: c[2], pm10: c[3], aod: c[4], co: c[5], aqi: c[6] } })) };
 }
-// Smooth haze overlay: one small canvas per regular grid block (Sumatra, Kalimantan), drawn as an image and resampled linearly by the GPU.
+// Smooth haze overlay: one small canvas for the national grid (cells far from land are absent), drawn as an image and resampled linearly by the GPU.
 function pmImages(cells, step) {
-  const blocks = [cells.filter((c) => c[1] < 107.5), cells.filter((c) => c[1] >= 107.5)];
+  const blocks = [cells];
   return blocks.filter((b) => b.length).map((b) => {
     const lats = b.map((c) => c[0]), lons = b.map((c) => c[1]);
     const la0 = Math.min(...lats), la1 = Math.max(...lats), lo0 = Math.min(...lons), lo1 = Math.max(...lons);
@@ -160,11 +169,11 @@ document.getElementById("pm-ramp").innerHTML = LW.PM.map(([v, l, col], i) => `<s
 const coSel = document.getElementById("co"), grpSel = document.getElementById("grp");
 ["Palm Oil", "Pulp & Paper", "Coal Mining"].forEach((s) => {
   const og = document.createElement("optgroup"); og.label = SECTORS[s].label;
-  COS.filter((c) => c.sector === s && c.gis_polygons).sort((a, b) => a.short.localeCompare(b.short))
-    .forEach((c) => og.insertAdjacentHTML("beforeend", `<option value="${c.id}">${esc(c.short)} (${c.gis_polygons})</option>`));
+  COS.filter((c) => c.sector === s && (c.gis_polygons || PTS_BY[c.id])).sort((a, b) => a.short.localeCompare(b.short))
+    .forEach((c) => og.insertAdjacentHTML("beforeend", `<option value="${c.id}">${esc(c.short)} (${c.gis_polygons ? c.gis_polygons + " mapped" : PTS_BY[c.id] + " approx."})</option>`));
   coSel.appendChild(og);
 });
-[...new Set(COS.filter((c) => c.gis_polygons).map((c) => c.group))].sort().forEach((g) => grpSel.insertAdjacentHTML("beforeend", `<option>${esc(g)}</option>`));
+[...new Set(COS.filter((c) => c.gis_polygons || PTS_BY[c.id]).map((c) => c.group))].sort().forEach((g) => grpSel.insertAdjacentHTML("beforeend", `<option>${esc(g)}</option>`));
 
 // ---------- map ----------
 const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
@@ -176,7 +185,7 @@ const blobUrl = (obj) => URL.createObjectURL(new Blob([JSON.stringify(obj)], { t
 const raster = (tiles, maxzoom, attribution = "") => ({ type: "raster", tiles, tileSize: 256, maxzoom, attribution });
 
 const map = new maplibregl.Map({
-  container: "map", center: [108.2, -0.8], zoom: 4.6, minZoom: 3, maxZoom: 14, attributionControl: { compact: true },
+  container: "map", bounds: [[95, -11], [141, 6]], fitBoundsOptions: { padding: 16 }, minZoom: 3, maxZoom: 14, attributionControl: { compact: true },
   style: {
     version: 8,
     sources: {
@@ -191,6 +200,7 @@ const map = new maplibregl.Map({
       ai: raster(gibs("VIIRS_NOAA20_AOD_Deep_Blue_Land_Ocean", 6, "png", yesterday), 6, "NASA GIBS"),
       live: raster(wmsFire(yesterday), 12, "NASA FIRMS/GIBS"),
       prov: { type: "geojson", data: window.PROVINCES },
+      pts: { type: "geojson", data: PTS },
       conc: { type: "geojson", data: blobUrl(CONC) },
       aq: { type: "geojson", data: aqGeo(window.AQ.cells, window.AQ.step) },
       ...Object.fromEntries(PMIMG.map((im, i) => ["pmimg" + i, { type: "image", url: im.url, coordinates: im.coords }])),
@@ -217,6 +227,8 @@ const map = new maplibregl.Map({
       { id: "ref-light", type: "raster", source: "lightRef" },
       { id: "ref-dark", type: "raster", source: "darkRef", layout: { visibility: "none" } },
       { id: "ref-sat", type: "raster", source: "satRef", layout: { visibility: "none" } },
+      { id: "pts", type: "circle", source: "pts", paint: { "circle-color": ["match", ["get", "s"], "P", C.P, "W", C.W, C.C], "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 4, 9, 7],
+        "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } },
       { id: "conc-sel", type: "line", source: "conc", filter: ["==", ["get", "id"], ""], paint: { "line-color": "#ffffff", "line-width": 3 } },
       { id: "conc-sel2", type: "line", source: "conc", filter: ["==", ["get", "id"], ""], paint: { "line-color": "#111", "line-width": 1.5 } },
     ],
@@ -234,6 +246,14 @@ function concFilter() {
   if ($("o-attr").checked) f.push(["!=", ["get", "cid"], ""]);
   if (coSel.value) f.push(["==", ["get", "cid"], coSel.value]);
   if (grpSel.value) f.push(["==", ["get", "gg"], grpSel.value]);
+  if ($("isl").value) f.push(["==", ["get", "i"], $("isl").value]);
+  return f;
+}
+function ptsFilter() {
+  const secs = [["P", "l-palm"], ["W", "l-pulp"], ["C", "l-coal"]].filter(([, id]) => $(id).checked).map(([s]) => s);
+  const f = ["all", ["in", ["get", "s"], ["literal", secs]]];
+  if (coSel.value) f.push(["==", ["get", "cid"], coSel.value]);
+  if (grpSel.value) f.push(["==", ["get", "gg"], grpSel.value]);
   return f;
 }
 function fireFilter() {
@@ -241,23 +261,25 @@ function fireFilter() {
   const f = ["all", [">=", ["get", "d"], Math.min(a, b)], ["<=", ["get", "d"], Math.max(a, b)]];
   if ($("o-conf").checked) f.push([">=", ["get", "c"], 1]);
   if ($("o-inside").checked) f.push(["!=", ["get", "k"], ""]);
+  if ($("isl").value) f.push(["==", ["get", "i"], $("isl").value]);
   return f;
 }
 function countFires() {
-  const a = Math.min(+$("d0").value, +$("d1").value), b = Math.max(+$("d0").value, +$("d1").value), lowOff = $("o-conf").checked, ins = $("o-inside").checked;
-  $("n-fire").textContent = F.rows.filter((r) => r[2] >= a && r[2] <= b && (!lowOff || r[5] >= 1) && (!ins || r[9])).length.toLocaleString();
+  const a = Math.min(+$("d0").value, +$("d1").value), b = Math.max(+$("d0").value, +$("d1").value), lowOff = $("o-conf").checked, ins = $("o-inside").checked, il = F.isls.indexOf($("isl").value);
+  $("n-fire").textContent = F.rows.filter((r) => r[2] >= a && r[2] <= b && (!lowOff || r[5] >= 1) && (!ins || r[9]) && (il < 0 || r[10] === il)).length.toLocaleString();
 }
 function vis(id, on) { map.setLayoutProperty(id, "visibility", on ? "visible" : "none"); }
 function apply() {
   const cf = concFilter();
   map.setFilter("conc-fill", cf); map.setFilter("conc-line", cf);
   map.setFilter("fires", fireFilter());
+  map.setFilter("pts", ptsFilter()); vis("pts", $("l-pts").checked);
   vis("fires", $("l-fire").checked); vis("prov", $("l-prov").checked); vis("pm", $("l-pm").checked); PMIMG.forEach((_, i) => vis("pmimg" + i, $("l-pm").checked));
   vis("aod", $("l-aod").checked); vis("ai", $("l-ai").checked); vis("tc", $("l-tc").checked); vis("live", $("l-live").checked);
   countFires();
 }
 function fitTo(pred) {
-  const fs = CONC.features.filter((f) => pred(f.properties)); if (!fs.length) return;
+  const fs = CONC.features.filter((f) => pred(f.properties)).concat(PTS.features.filter((f) => pred(f.properties) && f.properties.cid && !f.properties.id)); if (!fs.length) return;
   const b = new maplibregl.LngLatBounds();
   fs.forEach((f) => { const walk = (c) => (typeof c[0] === "number" ? b.extend(c) : c.forEach(walk)); walk(f.geometry.coordinates); });
   map.fitBounds(b, { padding: 60, maxZoom: 10, duration: 800 });
@@ -271,7 +293,8 @@ function setDate() {
 }
 
 map.on("load", () => {
-  ["l-palm", "l-pulp", "l-coal", "o-attr", "l-prov", "l-fire", "o-conf", "o-inside", "d0", "d1", "l-pm", "l-aod", "l-ai", "l-tc", "l-live"].forEach((id) => $(id).addEventListener("change", apply));
+  ["l-palm", "l-pulp", "l-coal", "o-attr", "l-prov", "l-fire", "o-conf", "o-inside", "d0", "d1", "l-pm", "l-aod", "l-ai", "l-tc", "l-live", "l-pts"].forEach((id) => $(id).addEventListener("change", apply));
+  $("isl").onchange = () => { const v = $("isl").value; if (v) fitTo((p) => p.i === v); else map.fitBounds([[95, -11], [141, 6]], { padding: 16 }); apply(); };
   coSel.onchange = () => { if (coSel.value) { grpSel.value = ""; fitTo((p) => p.cid === coSel.value); } apply(); };
   grpSel.onchange = () => { if (grpSel.value) { coSel.value = ""; fitTo((p) => p.gg === grpSel.value); } apply(); };
   sdate.onchange = setDate;
@@ -292,9 +315,16 @@ const SATS = F.sats, CONF = F.conf;
 map.on("click", (e) => {
   const fire = map.queryRenderedFeatures(e.point, { layers: ["fires"].filter((l) => map.getLayoutProperty(l, "visibility") !== "none") })[0];
   const conc = map.queryRenderedFeatures(e.point, { layers: ["conc-fill"] })[0];
+  const pt = map.queryRenderedFeatures(e.point, { layers: ["pts"].filter((l) => map.getLayoutProperty(l, "visibility") !== "none") })[0];
   const pmc = map.queryRenderedFeatures(e.point, { layers: ["pm"].filter((l) => map.getLayoutProperty(l, "visibility") !== "none") })[0];
   let html = "";
-  if (fire) {
+  if (pt) {
+    const p = pt.properties;
+    html += `<div class="pp"><h4><span class="dot ${SECTORS[CODE2SECTOR[p.s]].key}"></span> ${esc(p.n)}</h4><dl><dt>Company</dt><dd><a href="companies.html?id=${p.cid}">${esc(p.cn)}</a></dd>
+      <dt>Group</dt><dd>${esc(p.gg)}</dd><dt>Province</dt><dd>${esc(p.pr) || "–"}</dd><dt>Area</dt><dd>${p.a ? fmt.n(p.a) + " ha" : "–"}</dd></dl>
+      <p class="note" style="margin:6px 0 0">Approximate location from research, not a surveyed boundary.</p></div>`;
+  }
+  if (fire && !pt) {
     const p = fire.properties, k = p.k && CONC.features.find((f) => f.properties.id === p.k);
     html += `<div class="pp"><h4>Fire detection</h4><dl><dt>Date</dt><dd>${F.dates[p.d]} ${String(p.t).padStart(4, "0").replace(/(\d\d)(\d\d)/, "$1:$2")} UTC</dd>
       <dt>Satellite</dt><dd>${SATS[p.s]}</dd><dt>Confidence</dt><dd>${CONF[p.c]}</dd><dt>Fire power</dt><dd>${p.f} MW</dd><dt>Province</dt><dd>${esc(p.p)}</dd>
@@ -313,7 +343,7 @@ map.on("click", (e) => {
   }
   if (html) new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(e.lngLat).setHTML(html).addTo(map);
 });
-["conc-fill", "fires"].forEach((l) => { map.on("mouseenter", l, () => (map.getCanvas().style.cursor = "pointer")); map.on("mouseleave", l, () => (map.getCanvas().style.cursor = "")); });
+["conc-fill", "fires", "pts"].forEach((l) => { map.on("mouseenter", l, () => (map.getCanvas().style.cursor = "pointer")); map.on("mouseleave", l, () => (map.getCanvas().style.cursor = "")); });
 
 // ---------- live PM2.5 refresh ----------
 $("pm-refresh").onclick = async () => {

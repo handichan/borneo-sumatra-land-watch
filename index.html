@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Borneo–Sumatra Land Watch</title>
+<title>Indonesia Land Watch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;650;700;750&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="assets/app.css">
@@ -17,7 +17,7 @@
 <body>
 <main class="wrap">
   <section class="head">
-    <span class="eyebrow">Kalimantan &amp; Sumatra · palm oil · pulp &amp; paper · coal</span>
+    <span class="eyebrow">Indonesia · palm oil · pulp &amp; paper · coal</span>
     <h1>Who holds the land, and where it is burning</h1>
     <p class="lede" id="lede"></p>
   </section>
@@ -35,6 +35,11 @@
       <div id="aq-box"></div>
     </article>
   </section>
+
+  <article class="panel">
+    <header><h2>By island</h2><p>Mapped licence area and 7-day fire detections</p></header>
+    <div class="tbl-wrap"><table id="tb-isl"></table></div>
+  </article>
 
   <section class="grid-2">
     <article class="panel">
@@ -74,7 +79,7 @@ const inConc = F.rows.filter((r) => r[9]).length;
 const worst = window.AQ.cells.reduce((a, c) => (c[2] > a[2] ? c : a));
 const worstCat = LW.pmCat(worst[2]);
 const kp = [
-  [COS.length, "Companies profiled", "30 palm · 21 pulp · 31 coal"],
+  [COS.length, "Companies profiled", ["Palm Oil", "Pulp & Paper", "Coal Mining"].map((s) => COS.filter((c) => c.sector === s).length + " " + SECTORS[s].label.split(" ")[0].toLowerCase()).join(" · ")],
   [fmt.ha(areaBy.P), "Mapped oil palm licences", CONC.filter((f) => f.properties.s === "P").length.toLocaleString() + " polygons"],
   [fmt.ha(areaBy.W), "Mapped wood-fibre licences", CONC.filter((f) => f.properties.s === "W").length + " polygons"],
   [fmt.ha(areaBy.C), "Mapped coal licences", CONC.filter((f) => f.properties.s === "C").length + " polygons"],
@@ -86,10 +91,10 @@ document.getElementById("kpis").innerHTML = kp.map(([v, l, s, a]) => `<div class
 // fires per company
 const fireCo = {};
 F.rows.forEach((r) => { if (!r[9]) return; const p = CBY[r[9]]; if (p && p.cid) fireCo[p.cid] = (fireCo[p.cid] || 0) + 1; });
-const provTop = Object.entries(F.rows.reduce((a, r) => ((a[r[8]] = (a[r[8]] || 0) + 1), a), {})).sort((a, b) => b[1] - a[1]);
+const provTop = Object.entries(F.rows.reduce((a, r) => ((a[F.provs[r[8]]] = (a[F.provs[r[8]]] || 0) + 1), a), {})).sort((a, b) => b[1] - a[1]);
 const topCo = Object.entries(fireCo).sort((a, b) => b[1] - a[1])[0];
 document.getElementById("lede").textContent =
-  `${fmt.n(F.rows.length)} satellite fire detections fell on Kalimantan and Sumatra between ${S.fire_start} and ${S.fire_end}, ` +
+  `${fmt.n(F.rows.length)} satellite fire detections were recorded across Indonesia between ${S.fire_start} and ${S.fire_end}, ` +
   `${(100 * provTop[0][1] / F.rows.length).toFixed(0)}% of them in ${provTop[0][0]}. ${fmt.n(inConc)} landed inside mapped palm, pulpwood or coal licences; ` +
   `the most inside any one company's land was ${CO[topCo[0]].short} (${fmt.n(topCo[1])}).`;
 
@@ -124,11 +129,21 @@ document.getElementById("tb-hot").innerHTML = `<thead><tr><th>Licence</th><th>Pr
     <span class="sub">${p.cid ? esc(CO[p.cid].short) + " · " + esc(CO[p.cid].group) : p.g ? esc(p.g) : "Holder not in research set"}</span></td>
     <td>${esc(p.pr)}</td><td class="n">${fmt.ha(p.a)}</td><td class="n">${fmt.n(p.f)}</td></tr>`).join("") + "</tbody>";
 
+// island table
+const ISL_ORDER = ["Kalimantan", "Sumatra", "Papua", "Sulawesi", "Java", "Bali & Nusa Tenggara", "Maluku"];
+const isl = Object.fromEntries(ISL_ORDER.map((i) => [i, { P: 0, W: 0, C: 0, n: 0, fires: 0, inside: 0 }]));
+CONC.forEach((f) => { const p = f.properties, o = isl[p.i]; if (o) { o[p.s] += p.a || 0; o.n++; } });
+F.rows.forEach((r) => { const o = isl[F.isls[r[10]]]; if (o) { o.fires++; if (r[9]) o.inside++; } });
+document.getElementById("tb-isl").innerHTML = `<thead><tr><th>Island group</th><th class="n">Oil palm</th><th class="n">Wood fibre</th><th class="n">Coal</th><th class="n">Licences</th><th class="n">Fire detections</th><th class="n">Inside licences</th></tr></thead><tbody>` +
+  ISL_ORDER.map((i) => { const o = isl[i]; return `<tr><td>${i}</td><td class="n">${fmt.ha(o.P)}</td><td class="n">${fmt.ha(o.W)}</td><td class="n">${fmt.ha(o.C)}</td><td class="n">${fmt.n(o.n)}</td>
+    <td class="n">${o.fires > 5000 ? `<span class="chip pill-alert">${fmt.n(o.fires)}</span>` : fmt.n(o.fires)}</td><td class="n">${o.fires ? (100 * o.inside / o.fires).toFixed(0) + "%" : "–"}</td></tr>`; }).join("") + "</tbody>";
+
 // haze box
 const AQ = window.AQ;
 document.getElementById("aq-time").textContent = "CAMS model · " + AQ.time;
 const CITIES = [["Palangka Raya", -2.21, 113.92], ["Banjarmasin", -3.32, 114.59], ["Pontianak", -0.03, 109.33], ["Samarinda", -0.5, 117.15],
-  ["Palembang", -2.98, 104.76], ["Jambi", -1.61, 103.61], ["Pekanbaru", 0.51, 101.45], ["Bandar Lampung", -5.43, 105.26], ["Medan", 3.59, 98.67]];
+  ["Palembang", -2.98, 104.76], ["Jambi", -1.61, 103.61], ["Pekanbaru", 0.51, 101.45], ["Bandar Lampung", -5.43, 105.26], ["Medan", 3.59, 98.67],
+  ["Jakarta", -6.2, 106.85], ["Makassar", -5.14, 119.42], ["Jayapura", -2.53, 140.72], ["Merauke", -8.49, 140.4]];
 const near = (lat, lon) => AQ.cells.reduce((a, c) => (Math.hypot(c[0] - lat, c[1] - lon) < Math.hypot(a[0] - lat, a[1] - lon) ? c : a));
 const rows = CITIES.map(([n, la, lo]) => [n, near(la, lo)]).sort((a, b) => b[1][2] - a[1][2]);
 document.getElementById("aq-box").innerHTML = `<table><thead><tr><th>City (nearest 0.5° cell)</th><th class="n">PM2.5</th><th>Category</th></tr></thead><tbody>` +

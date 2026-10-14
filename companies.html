@@ -25,9 +25,9 @@
 <body>
 <main class="wrap">
   <section class="head">
-    <span class="eyebrow">82 companies and groups</span>
+    <span class="eyebrow" id="eyebrow">Companies and groups</span>
     <h1>Company profiles</h1>
-    <p class="lede">Owners, listings, revenue, landbank and track record for the palm oil, pulp and coal companies holding land in Kalimantan and Sumatra. "Mapped" figures come from licence polygons; "reported" figures come from company disclosures and research.</p>
+    <p class="lede">Owners, listings, revenue, landbank and track record for the palm oil, pulp and coal companies holding land across Indonesia, with most of the land in Kalimantan, Sumatra and Papua. "Mapped" figures come from licence polygons; "reported" figures come from company disclosures and research.</p>
   </section>
   <div class="controls">
     <div class="seg" id="seg" role="group" aria-label="Sector">
@@ -48,6 +48,7 @@
 </main>
 <script>
 LW.nav("companies.html");
+document.getElementById("eyebrow").textContent = window.COMPANIES.length + " companies and groups";
 const { fmt, esc, SECTORS } = LW;
 const COS = window.COMPANIES;
 let sector = "", q = "", sortKey = "revenue_usd_m", sortDir = -1, selId = LW.params().get("id");
@@ -91,6 +92,7 @@ function select(id) {
       <div><b>${fmt.ha(c.gis_area_ha)}</b><span>Mapped licences (${c.gis_polygons})</span></div>
       <div><b style="${c.fires7d > 100 ? "color:var(--fire)" : ""}">${fmt.n(c.fires7d)}</b><span>Fire detections in licences, 7 d</span></div>
     </div>
+    ${!c.gis_polygons && (c.concessions || []).some((k) => typeof k.lat === "number") ? `<p><a href="map.html?company=${c.id}">Show approximate subsidiary locations on the map →</a></p>` : ""}
     ${c.gis_polygons ? `<p><a href="map.html?company=${c.id}">Show ${c.gis_polygons} mapped licence${c.gis_polygons > 1 ? "s" : ""} on the map →</a></p>` : `<p class="note">No licence polygon could be attributed to this entity by name; see named subsidiaries below.</p>`}
     <dl>
       <dt>Controlling owners</dt><dd>${esc(c.owners) || "–"}</dd>
@@ -98,6 +100,7 @@ function select(id) {
       <dt>Listing</dt><dd>${esc(c.listing_status)}${c.tickers_str ? " · <span class='mono'>" + esc(c.tickers_str) + "</span>" : ""} · HQ ${esc(c.hq_country || "–")}</dd>
       <dt>Revenue (local)</dt><dd>${c.revenue_local != null ? fmt.n(c.revenue_local) + " " + esc(c.revenue_currency) : "–"}<span class="sub">${esc(c.fx_note || "")}</span></dd>
       <dt>Kalimantan / Sumatra</dt><dd>${fmt.ha(c.kalimantan_ha)} / ${fmt.ha(c.sumatra_ha)} reported · ${fmt.ha(c.gis_kal_ha)} / ${fmt.ha(c.gis_sum_ha)} mapped</dd>
+      <dt>Mapped by island</dt><dd>${Object.entries(c.gis_by_island || {}).map(([k, v]) => esc(k) + " " + fmt.ha(v)).join(" · ") || "–"}</dd>
       <dt>Area note</dt><dd>${esc(c.area_note) || "–"}</dd>
       <dt>Provinces</dt><dd>${esc((c.provinces || []).join(", ")) || "–"}</dd>
       <dt>Production</dt><dd>${esc(c.production) || "–"}</dd>

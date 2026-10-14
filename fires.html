@@ -29,7 +29,7 @@
     </article>
     <article class="panel">
       <header><h2>Detections by province</h2><p>Share inside mapped licences</p></header>
-      <div class="tbl-wrap"><table id="tb-prov"></table></div>
+      <div class="tbl-wrap" style="max-height:440px;overflow:auto"><table id="tb-prov"></table></div>
     </article>
   </section>
   <article class="panel">
@@ -59,17 +59,18 @@ LW.nav("fires.html");
 const { fmt, esc, SECTORS, sectorColor } = LW;
 const F = window.FIRES, COS = window.COMPANIES, CO = Object.fromEntries(COS.map((c) => [c.id, c]));
 const CBY = Object.fromEntries(window.CONCESSIONS.features.map((f) => [f.properties.id, f.properties]));
-const prov = {}; F.rows.forEach((r) => { const p = (prov[r[8]] ||= { n: 0, inside: 0, frp: 0, days: Array(F.dates.length).fill(0) }); p.n++; p.days[r[2]]++; p.frp += r[6]; if (r[9]) p.inside++; });
+const prov = {}; F.rows.forEach((r) => { const p = (prov[F.provs[r[8]]] ||= { n: 0, inside: 0, frp: 0, days: Array(F.dates.length).fill(0) }); p.n++; p.days[r[2]]++; p.frp += r[6]; p.isl = F.isls[r[10]]; if (r[9]) p.inside++; });
 const P = Object.entries(prov).sort((a, b) => b[1].n - a[1].n);
-const kal = F.rows.filter((r) => ["Central Kalimantan", "East Kalimantan", "North Kalimantan", "South Kalimantan", "West Kalimantan"].includes(r[8])).length;
+const byIsl = {}; F.rows.forEach((r) => { const k = F.isls[r[10]]; byIsl[k] = (byIsl[k] || 0) + 1; });
+const islKpi = (name) => [fmt.n(byIsl[name] || 0), name, (100 * (byIsl[name] || 0) / F.rows.length).toFixed(0) + "% of total"];
+const otherIsl = F.rows.length - (byIsl.Kalimantan || 0) - (byIsl.Sumatra || 0) - (byIsl.Papua || 0);
 const hi = F.rows.filter((r) => r[5] === 2).length, night = F.rows.filter((r) => !r[7]).length;
 const peakDay = F.dates.map((d, i) => [d, F.rows.filter((r) => r[2] === i).length]).sort((a, b) => b[1] - a[1])[0];
-document.getElementById("lede").textContent = `${fmt.n(F.rows.length)} detections from four satellites. ${P[0][0]} alone had ${fmt.n(P[0][1].n)}, and ${P[1][0]} ${fmt.n(P[1][1].n)}. ` +
+document.getElementById("lede").textContent = `${fmt.n(F.rows.length)} detections across Indonesia from four satellites. ${P[0][0]} alone had ${fmt.n(P[0][1].n)}, and ${P[1][0]} ${fmt.n(P[1][1].n)}. ` +
   `The busiest day was ${peakDay[0]} with ${fmt.n(peakDay[1])}. Night-time detections (${(100 * night / F.rows.length).toFixed(0)}%) are typical of smouldering peat.`;
 document.getElementById("kpis").innerHTML = [
-  [fmt.n(F.rows.length), "Detections, 7 days", "VIIRS ×3 + MODIS", true], [fmt.n(kal), "Kalimantan", (100 * kal / F.rows.length).toFixed(0) + "% of total"],
-  [fmt.n(F.rows.length - kal), "Sumatra", (100 * (F.rows.length - kal) / F.rows.length).toFixed(0) + "% of total"],
-  [fmt.n(night), "Night-time", "smouldering signal"], [fmt.n(hi), "High confidence", "VIIRS high / MODIS ≥80"], [fmt.n(F.rows.filter((r) => r[9]).length), "Inside mapped licences", "palm, pulp or coal"],
+  [fmt.n(F.rows.length), "Detections, 7 days", "VIIRS ×3 + MODIS", true], islKpi("Kalimantan"), islKpi("Sumatra"), islKpi("Papua"),
+  [fmt.n(otherIsl), "Other islands", "Sulawesi, Java, Nusa Tenggara, Maluku"], [fmt.n(F.rows.filter((r) => r[9]).length), "Inside mapped licences", `${fmt.n(night)} at night · ${fmt.n(hi)} high confidence`],
 ].map(([v, l, s, a]) => `<div class="kpi${a ? " alert" : ""}"><span class="v">${v}</span><span class="l">${l}</span><span class="s">${s}</span></div>`).join("");
 
 LW.onRender(() => {
@@ -82,8 +83,8 @@ LW.onRender(() => {
   const counts = LW.PM.map(() => 0); window.AQ.cells.forEach((c) => counts[LW.PM.indexOf(LW.pmCat(c[2]))]++);
   LW.hbar(document.getElementById("ch-aq"), LW.PM.map(([, l, col], i) => ({ label: l, value: counts[i], color: col, tip: `<b>${l}</b><br>${counts[i]} cells (${(100 * counts[i] / window.AQ.cells.length).toFixed(0)}%)` })), { labelW: 150 });
 });
-document.getElementById("tb-prov").innerHTML = `<thead><tr><th>Province</th><th class="n">Detections</th><th class="n">Inside licences</th><th class="n">Mean FRP (MW)</th></tr></thead><tbody>` +
-  P.map(([n, p]) => `<tr><td>${esc(n)}</td><td class="n">${fmt.n(p.n)}</td><td class="n">${(100 * p.inside / p.n).toFixed(0)}%</td><td class="n">${(p.frp / p.n).toFixed(1)}</td></tr>`).join("") + "</tbody>";
+document.getElementById("tb-prov").innerHTML = `<thead><tr><th>Province</th><th>Island</th><th class="n">Detections</th><th class="n">Inside licences</th><th class="n">Mean FRP (MW)</th></tr></thead><tbody>` +
+  P.map(([n, p]) => `<tr><td>${esc(n)}</td><td>${esc(p.isl)}</td><td class="n">${fmt.n(p.n)}</td><td class="n">${(100 * p.inside / p.n).toFixed(0)}%</td><td class="n">${(p.frp / p.n).toFixed(1)}</td></tr>`).join("") + "</tbody>";
 
 let sec = "";
 function coTable() {

@@ -34,7 +34,7 @@
     const s = window.SNAPSHOT || {};
     const el = document.createElement("header");
     el.className = "nav";
-    el.innerHTML = `<div class="brand"><span class="brand-mark" aria-hidden="true"></span>Borneo–Sumatra Land Watch</div>
+    el.innerHTML = `<div class="brand"><span class="brand-mark" aria-hidden="true"></span>Indonesia Land Watch</div>
       <nav>${pages.map(([h, t]) => `<a href="${h}"${h === active ? ' aria-current="page"' : ""}>${t}</a>`).join("")}</nav>
       <span class="stamp">Fires ${s.fire_start || ""} → ${s.fire_end || ""} · built ${s.built || ""}</span>`;
     document.body.prepend(el);
