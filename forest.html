@@ -41,8 +41,11 @@
     .overlay-tl { left: 8px; top: 8px; gap: 6px; }
     .yearbadge { padding: 4px 9px; }
     .yearbadge b { font-size: 1.25rem; }
-    .maplegend { font-size: 0.66rem; padding: 5px 8px; gap: 1px; }
-    .maplegend .sw { width: 10px; height: 10px; }
+    #map .maplegend { font-size: 0.66rem; padding: 4px 8px; gap: 2px 9px; }
+    #map .maplegend.on { display: flex; flex-wrap: wrap; max-width: calc(100vw - 86px); }
+    #map .maplegend .sw { width: 10px; height: 10px; }
+    #map .maplegend em { display: none; }
+    #map .yearbadge small { font-size: 0.64rem; }
     .tl-track { padding: 0 4px; }
     .ticks button { font-size: 0.64rem; padding: 2px 1px; letter-spacing: -0.02em; }
   }
@@ -86,6 +89,7 @@
 <script src="data/snapshot.js"></script>
 <script src="data/islands.js"></script>
 <script src="data/forest.js"></script>
+<script src="data/landuse_stats.js"></script>
 <script src="assets/common.js"></script>
 </head>
 <body>
@@ -95,7 +99,7 @@
     <section>
       <span class="eyebrow">Landsat &amp; Sentinel-2 imagery · 2000–2026</span>
       <h1>Forest change on Indonesia's five largest islands, from space</h1>
-      <p class="note" style="margin:0">Real satellite mosaics of Sumatra, Borneo, Java, Sulawesi and Papua. Dark green is closed forest; lighter greens, browns and straight-edged blocks are plantations, farmland and cleared ground. Pick a year on the timeline under the map or press play, then zoom in to a province to see clearing spread. Switch on the land-use layer to colour forest, oil palm, cities and mines for the selected year.</p>
+      <p class="note" style="margin:0">Real satellite mosaics of Sumatra, Borneo, Java, Sulawesi and Papua. Dark green is closed forest; lighter greens, browns and straight-edged blocks are plantations, farmland and cleared ground. Pick a year on the timeline under the map or press play, then zoom in to a province to see clearing spread. The land-use layer, on by default, colours natural forest, oil palm, pulpwood, cities and mines for the selected year; switch it off with the Land use button to see the bare imagery.</p>
     </section>
     <section>
       <div class="yr"><b id="yr-v">2000</b><small id="yr-n"></small></div>
@@ -106,11 +110,14 @@
     </section>
     <section>
       <h2>Land-use classification</h2>
-      <label class="tg"><input type="checkbox" id="o-cls"> Show the land-use layer for the selected year</label>
+      <label class="tg"><input type="checkbox" id="o-cls" checked> Show the land-use layer for the selected year</label>
       <div class="cls-list" id="cls" role="group" aria-label="Classes to show"></div>
       <label class="tg op">Opacity <input type="range" id="cls-op" min="0.3" max="1" step="0.05" value="0.85" aria-label="Land-use layer opacity"></label>
-      <p class="note" style="margin:0">Click a class to hide or show it. <b>Forest</b>: tree cover in 2000 (≥30% canopy) not yet cleared by the selected year (Hansen/UMD). <b>Oil palm</b> and <b>pulpwood</b>: GFW Spatial Database of Planted Trees v2, mapped around 2020; a plantation pixel stays green until the year its forest was cleared. Pulpwood is shown separately so acacia plantations are not counted as forest. <b>Cities &amp; structures</b>: Esri / Impact Observatory 10 m land cover for each year from 2017; the 2017 map stands in for earlier years. <b>Mining</b>: mine footprints mapped from about 2019 imagery (Maus et al. 2022). Unshaded land is other non-forest: farms, shrub, burnt or bare ground, water.</p>
-      <p class="note" style="margin:0">Plantation and mine outlines are fixed in time, so land that was already non-forest in 2000 shows its later use from the first year. The layer is computed in your browser from public map tiles and is coarse when zoomed out; zoom in for 30 m detail.</p>
+      <table class="ft" id="lu-tb"></table>
+      <p class="note" style="margin:0">Share of each island's land in <span id="lu-yr">2000</span>. Click a class above to hide or show it.</p>
+      <p class="note" style="margin:0"><b>Forest</b> is natural forest: tree cover in 2000 (≥30% canopy, Hansen/UMD) not yet cleared by the selected year, on land that is natural forest in 2020 (SBTN Natural Lands) or was primary forest in 2001 (Turubanova/UMD) and cleared later. That leaves out savanna woodland, scrub, open swamp, rubber and other tree crops, which tree-cover maps count as forest (south Papua's savanna, for example). <b>Oil palm</b>: GFW Spatial Database of Planted Trees v2 ("Oil Palm" type, plus plantations of unknown type inside oil palm licences), mapped around 2020. <b>Pulpwood</b>: planted wood-fibre or unknown-type plantations inside Indonesian pulpwood (HTI) licences, so acacia is not counted as forest; plantations in Sabah and Sarawak are not shown as pulpwood. A plantation appears in the year its tree cover was cleared; before that the land shows as forest or other land. Plots the planted-trees map calls "oil palm mix" (palm among other crops, mostly smallholder) are left as other land because in the imagery check they were mainly gardens and scrub, so palm area here is below official plantation totals. <b>Cities &amp; structures</b>: Esri / Impact Observatory 10 m land cover for each year from 2017; the 2017 map stands in for earlier years. <b>Mining</b>: mine footprints mapped from about 2019 imagery (Maus et al. 2022). Unshaded land is other land: farms, rubber and mixed gardens, savanna and grassland, scrub, burnt or bare ground, water.</p>
+      <p class="note" style="margin:0">Plantation and mine outlines are fixed in time, so the 5–8% of plantation land that was already open in 2000 shows its later use from the first year, and old palm that was replanted after 2000 shows as other land until replanting. Zoomed out, the map uses pre-rendered tiles in which each pixel is a sample of the 300 m pixels under it, so every class keeps its true share; from zoom 9 the layer is computed live in your browser at up to 30 m detail.</p>
+      <p class="note" id="cls-acc" style="margin:0"><b>Imagery check</b> (October 2026): 132 random points across the five islands, stratified by class, were labelled blind from ~1 m Esri World Imagery and Sentinel-2 2024 imagery; 19 were too ambiguous to call. The layer agreed with the imagery at 88 of 113 points (78%): forest 28/31, mining 9/11, cities 4/5, oil palm 14/18, other land 32/46, pulpwood 1/2. By island: Papua 20/21, Sulawesi 19/23, Borneo 17/22, Sumatra 17/24, Java 15/23. Most misses are mixed gardens read as plantation or forest, small artisanal gold pits that are not in the mine map, and plantations newer than about 2020. Two rules (leaving out "oil palm mix", pulpwood only inside licences) were set using this same sample, so treat the score as indicative. Details: build/validation in the project.</p>
     </section>
     <section>
       <h2>Zoom to island</h2>
@@ -139,10 +146,10 @@
   <div id="map">
     <div class="overlay-tl">
       <div class="yearbadge"><b id="badge">2000</b><small id="badge-s"></small></div>
-      <div class="maplegend" id="mlg"></div>
+      <div class="maplegend on" id="mlg"></div>
     </div>
     <div class="timeline" role="group" aria-label="Year">
-      <div class="tl-btns"><button class="btn" id="play" aria-pressed="false">▶ Play</button><button class="btn" id="clsbtn" aria-pressed="false">Land use</button></div>
+      <div class="tl-btns"><button class="btn" id="play" aria-pressed="false">▶ Play</button><button class="btn" id="clsbtn" aria-pressed="true">Land use</button></div>
       <div class="tl-track">
         <input type="range" id="yr" min="0" max="9" step="1" value="0" aria-label="Year">
         <div class="ticks" id="ticks"></div>
@@ -187,13 +194,14 @@ let idx = 0, timer = null, ready = false;
 const GFW = "https://tiles.globalforestwatch.org";
 const LULC = "https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage";
 const CLS = [
-  { label: "Forest", rgb: [34, 160, 75], src: "Hansen/UMD" },
+  { label: "Forest", rgb: [34, 160, 75], src: "Hansen/UMD + SBTN" },
   { label: "Oil palm plantation", rgb: [242, 201, 76], src: "GFW planted trees" },
   { label: "Cities & structures", rgb: [255, 255, 255], src: "Esri 10 m land cover" },
   { label: "Mining & open pits", rgb: [140, 145, 150], src: "Maus et al. 2022" },
-  { label: "Pulpwood & timber plantation", rgb: [184, 140, 226], src: "GFW planted trees" },
+  { label: "Pulpwood plantation", rgb: [184, 140, 226], src: "GFW + HTI licences" },
 ];
-let clsMask = (1 << CLS.length) - 1, clsOn = false, minesP = null, MINE_PARTS = [];
+let clsMask = (1 << CLS.length) - 1, clsOn = true, minesP = null, MINE_PARTS = [];
+const LIVE_Z = (window.LANDUSE?.zmax ?? 8) + 1; // below this zoom, pre-rendered tiles that keep each class's true share
 const lcUrl = () => `lc://${DATA_YEAR(YEARS[idx])}/${clsMask}/{z}/{x}/{y}`;
 const T = 256, N = T * T, MERC = 20037508.342789244;
 const lon2px = (lo, z, x) => (((lo + 180) / 360) * 2 ** z - x) * T;
@@ -208,10 +216,13 @@ const toParts = (polys) => polys.map((rings) => {
   return { bb, rings };
 });
 const ISL_PARTS = toParts(ISL.flatMap((f) => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates)));
-const loadMines = () => (minesP ||= new Promise((ok) => {
-  const s = document.createElement("script"); s.src = "data/mines.js";
-  s.onload = () => { MINE_PARTS = toParts(window.MINES.flatMap((m) => m.p)); ok(true); };
-  s.onerror = () => ok(false); document.head.append(s);
+let PALM_LIC = [], PULP_LIC = [];
+const script = (src) => new Promise((ok) => { const s = document.createElement("script"); s.src = src; s.onload = () => ok(true); s.onerror = () => ok(false); document.head.append(s); });
+// mine footprints and palm/pulpwood licence outlines, needed only once zoomed in to live compositing
+const loadMines = () => (minesP ||= Promise.all([script("data/mines.js"), script("data/lu_licences.js")]).then(([a, b]) => {
+  if (a) MINE_PARTS = toParts(window.MINES.flatMap((m) => m.p));
+  if (b) { PALM_LIC = toParts(window.LU_LICENCES.P); PULP_LIC = toParts(window.LU_LICENCES.W); }
+  return a && b;
 }));
 const cvA = new OffscreenCanvas(T, T), cxA = cvA.getContext("2d", { willReadFrequently: true });
 async function pixels(url) {
@@ -237,25 +248,34 @@ function rasterize(list, z, x, y, thr) {
   for (let p = 0; p < N; p++) out[p] = d[p * 4 + 3] >= thr ? 1 : 0;
   return out;
 }
-// year-independent inputs per tile: flags (1 tree cover 2000, 2 oil palm, 4 pulpwood/timber, 8 mine, 16 on island) and loss year (years after 2000)
+// year-independent inputs per tile: flags (1 tree cover 2000, 2 oil palm, 4 pulpwood/timber, 8 mine, 16 on island,
+// 32 natural forest 2020, 64 primary forest 2001) and loss year (years after 2000). Same rule as build/scripts/landuse.py.
 async function staticTile(z, x, y) {
   const isl = rasterize(ISL_PARTS, z, x, y, 128);
   if (!isl.some((v) => v)) return null;
-  const mine = rasterize(MINE_PARTS, z, x, y, 96);
-  const [tcd, loss, pf] = await Promise.all([
+  await loadMines();
+  const mine = rasterize(MINE_PARTS, z, x, y, 96), inP = rasterize(PALM_LIC, z, x, y, 128), inW = rasterize(PULP_LIC, z, x, y, 128);
+  const [tcd, loss, pf, nl, pr] = await Promise.all([
     pixels(`${GFW}/umd_tree_cover_density_2000/v1.8/tcd_30/${z}/${x}/${y}.png`),
     pixels(`${GFW}/umd_tree_cover_loss/v1.13/dynamic/${z}/${x}/${y}.png?implementation=tcd_30`),
     pixels(`${GFW}/gfw_planted_forests/v20230911/default/${z}/${x}/${y}.png`),
+    pixels(`${GFW}/sbtn_natural_lands_classification/v1.1/default_pro/${z}/${x}/${y}.png`),
+    pixels(`${GFW}/umd_regional_primary_forest_2001/v201901/default/${z}/${x}/${y}.png`),
   ]);
   const fl = new Uint8Array(N), ly = new Uint8Array(N), fine = z >= 11;
   for (let p = 0; p < N; p++) {
     if (!isl[p]) continue;
     const q = p * 4; let f = 16;
     if (tcd && tcd[q + 3]) f |= 1;
+    if (nl && nl[q + 3] && nl[q] < 60 && nl[q + 1] > 90 && nl[q + 2] < 60) f |= 32; // natural forest 2020, incl. mangrove, swamp and peat forest
+    if (pr && pr[q + 3] && pr[q + 1] > 100 && pr[q] < 130) f |= 64; // primary forest 2001
     if (pf && pf[q + 3] > 200) {
-      const r = pf[q], g = pf[q + 1], b = pf[q + 2];
-      if (r > 245 && g > 165 && g < 205 && b > 160 && b < 200) f |= 2; // oil palm, oil palm mix
-      else if (Math.abs(r - 151) < 8 && Math.abs(g - 167) < 8 && Math.abs(b - 196) < 8) f |= 4; // wood fibre / timber
+      // checked against imagery: "Oil Palm Mix" and wood fibre outside pulpwood licences were mostly gardens, scrub or
+      // forest; "Unknown" plantations were mostly palm inside palm licences and acacia inside pulpwood licences
+      const near = (c) => Math.abs(pf[q] - c[0]) < 5 && Math.abs(pf[q + 1] - c[1]) < 5 && Math.abs(pf[q + 2] - c[2]) < 5;
+      const unk = near([119, 117, 117]);
+      if (near([253, 173, 169]) || (unk && inP[p])) f |= 2;
+      else if (inW[p] && (unk || near([152, 167, 196]))) f |= 4;
     }
     if (mine[p]) f |= 8;
     // zoomed out, R is the share of the pixel that was lost: keep that share of pixels (sqrt matches the GFW area totals best)
@@ -280,21 +300,45 @@ function cached(key, fn) {
   if (memo.size > 600) memo.delete(memo.keys().next().value);
   return v;
 }
+// zoomed out: pre-rendered class tiles (build_landuse_tiles.py), with hidden classes cut out
+async function overviewTile(yr, en, z, x, y) {
+  const d = await pixels(`data/landuse/${yr}/${z}/${x}/${y}.png`);
+  if (!d) return null;
+  const img = new ImageData(T, T), o = img.data;
+  for (let p = 0; p < N; p++) {
+    const q = p * 4; if (!d[q + 3]) continue;
+    const c = CLS.findIndex((k) => Math.abs(k.rgb[0] - d[q]) < 3 && Math.abs(k.rgb[1] - d[q + 1]) < 3 && Math.abs(k.rgb[2] - d[q + 2]) < 3);
+    if (c < 0 || !(en & (1 << c))) continue;
+    o[q] = d[q]; o[q + 1] = d[q + 1]; o[q + 2] = d[q + 2]; o[q + 3] = 255;
+  }
+  return img;
+}
 maplibregl.addProtocol("lc", async (params) => {
   const [yr, en, z, x, y] = params.url.slice(5).split("/").map(Number);
-  const cv = new OffscreenCanvas(T, T), cx = cv.getContext("2d"), st = await cached(`s/${z}/${x}/${y}`, () => staticTile(z, x, y));
+  const cv = new OffscreenCanvas(T, T), cx = cv.getContext("2d");
+  if (z < LIVE_Z) {
+    const img = await overviewTile(yr, en, z, x, y);
+    if (img) cx.putImageData(img, 0, 0);
+    return { data: await (await cv.convertToBlob({ type: "image/png" })).arrayBuffer() };
+  }
+  const st = await cached(`s/${z}/${x}/${y}`, () => staticTile(z, x, y));
   if (st) {
     const by = Math.max(2017, yr), built = en & 4 ? await cached(`b/${by}/${z}/${x}/${y}`, () => builtTile(z, x, y, by)) : null;
     const img = new ImageData(T, T), o = img.data, yo = yr - 2000;
     for (let p = 0; p < N; p++) {
       const f = st.fl[p]; if (!f) continue;
-      const l = st.ly[p], forestNow = f & 1 && !(l && l <= yo), clearedLater = f & 1 && l > yo;
+      // forest = tree cover 2000 not cleared by this year, on land that is natural forest in 2020 or was primary forest
+      // cleared after this year; this leaves out savanna woodland, scrub, rubber and other tree crops
+      const l = st.ly[p], ok = f & 32 || (f & 64 && l > yo);
+      const forest = f & 1 && ok && !(l && l <= yo);
+      // plantations and mines appear once their tree cover is cleared (or if the land was already open in 2000)
+      const use = !forest && !(f & 1 && l > yo);
       let c = 0;
-      if (built && built[p] && (yr >= 2017 || !forestNow)) c = 3;
-      else if (f & 8 && !forestNow) c = 4;
-      else if (f & 2) c = clearedLater ? 1 : 2;
-      else if (f & 4) c = clearedLater ? 1 : 5;
-      else if (forestNow) c = 1;
+      if (built && built[p] && (yr >= 2017 || !forest)) c = 3;
+      else if (f & 8 && use) c = 4;
+      else if (f & 2 && use) c = 2;
+      else if (f & 4 && use) c = 5;
+      else if (forest) c = 1;
       if (!c || !(en & (1 << (c - 1)))) continue;
       const rgb = CLS[c - 1].rgb, q = p * 4;
       o[q] = rgb[0]; o[q + 1] = rgb[1]; o[q + 2] = rgb[2]; o[q + 3] = 255;
@@ -321,7 +365,7 @@ Object.entries(MOSAICS).forEach(([k, m]) => {
 sources.lc = { type: "raster", tiles: [lcUrl()], tileSize: 256, minzoom: 3, maxzoom: 12,
   attribution: "Land use: Hansen/UMD/Google/USGS/NASA tree cover & GFW Spatial Database of Planted Trees v2 via Global Forest Watch; Esri / Impact Observatory 10 m Land Cover; Maus et al. 2022 mining polygons" };
 layers.push(
-  { id: "lc", type: "raster", source: "lc", layout: { visibility: "none" }, paint: { "raster-opacity": 0.85, "raster-fade-duration": 0, "raster-resampling": "nearest" } },
+  { id: "lc", type: "raster", source: "lc", layout: { visibility: "visible" }, paint: { "raster-opacity": 0.85, "raster-fade-duration": 0, "raster-resampling": "nearest" } },
   { id: "mask", type: "fill", source: "mask", paint: { "fill-color": "#0d1110", "fill-opacity": 0.72 } },
   { id: "isl-line", type: "line", source: "isl", paint: { "line-color": "#ffffff", "line-width": 0.7, "line-opacity": 0.5 } },
   { id: "ref", type: "raster", source: "ref", paint: { "raster-opacity": 0.85 } });
@@ -348,7 +392,20 @@ function setYear(i) {
   $("yr-n").textContent = m.label.replace(/ cloudless| GLS/, "");
   $("src").innerHTML = `Showing <b>${esc(m.label)}</b>, ${esc(m.when)}.`;
   $("yr-t").textContent = y === 2026 ? "2025 (latest data)" : y;
-  showMosaic(); refreshCls(); table(); drawLine();
+  showMosaic(); refreshCls(); table(); luTable(); drawLine();
+}
+const LU_KEYS = ["forest", "palm", "pulp", "built", "mine"], LU_CLS = [0, 1, 4, 2, 3], LU_SHORT = ["Forest", "Palm", "Pulp", "Built", "Mine"];
+function luTable() {
+  const y = String(DATA_YEAR(YEARS[idx])), st = window.LANDUSE?.stats?.[y];
+  $("lu-yr").textContent = YEARS[idx] === 2026 ? "2025 (latest data)" : y;
+  if (!st) { $("lu-tb").innerHTML = ""; return; }
+  const sw = (i) => `<i class="sw" style="background:rgb(${CLS[i].rgb});border:1px solid rgba(0,0,0,.35)" title="${esc(CLS[i].label)}"></i>`;
+  $("lu-tb").innerHTML = `<thead><tr><th>Island</th>${LU_CLS.map((i, j) => `<th class="n">${sw(i)}<br>${LU_SHORT[j]}</th>`).join("")}</tr></thead><tbody>` +
+    Object.entries(st).map(([k, v]) => {
+      const tot = Object.values(v).reduce((a, b) => a + b, 0) || 1;
+      return `<tr><td><b>${esc(k)}</b></td>${LU_KEYS.map((c, j) => `<td class="n" data-tip="<b>${esc(k)}</b><br>${esc(CLS[LU_CLS[j]].label)}: ${fmt.ha(v[c])}">${(100 * v[c] / tot).toFixed(v[c] / tot < 0.01 ? 1 : 0)}%</td>`).join("")}</tr>`;
+    }).join("") + "</tbody>";
+  LW.bindTips($("lu-tb"));
 }
 function refreshCls() { if (ready) map.getSource("lc").setTiles([lcUrl()]); }
 async function setCls(on) {
