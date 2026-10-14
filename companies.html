@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Company Profiles · Land Watch</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;650;700;750&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .split .panel.sticky { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 64px); max-height: calc(100vh - 84px); overflow: auto; }
+  @media (max-width: 1000px) { .split { grid-template-columns: 1fr; } .split .panel.sticky { position: static; max-height: none; } }
+  .tbl-wrap.tall { max-height: 72vh; overflow: auto; }
+  .p-title { display: grid; gap: 4px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+  .facts div { background: var(--surface); padding: 10px 12px; display: grid; }
+  .facts b { font-family: var(--font-display); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .facts span { font-size: 0.76rem; color: var(--muted); }
+  .subs td { font-size: 0.82rem; padding: 5px 8px; }
+</style>
+<script src="data/snapshot.js"></script>
+<script src="data/companies.js"></script>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="head">
+    <span class="eyebrow">82 companies and groups</span>
+    <h1>Company profiles</h1>
+    <p class="lede">Owners, listings, revenue, landbank and track record for the palm oil, pulp and coal companies holding land in Kalimantan and Sumatra. "Mapped" figures come from licence polygons; "reported" figures come from company disclosures and research.</p>
+  </section>
+  <div class="controls">
+    <div class="seg" id="seg" role="group" aria-label="Sector">
+      <button id="s-all" aria-pressed="true" data-s="">All</button>
+      <button id="s-palm" aria-pressed="false" data-s="Palm Oil">Palm oil</button>
+      <button id="s-pulp" aria-pressed="false" data-s="Pulp & Paper">Pulp &amp; paper</button>
+      <button id="s-coal" aria-pressed="false" data-s="Coal Mining">Coal</button>
+    </div>
+    <input type="search" id="q" placeholder="Search company, owner, ticker, province" aria-label="Search companies">
+    <span class="chip" id="count"></span>
+  </div>
+  <section class="split">
+    <article class="panel">
+      <div class="tbl-wrap tall"><table id="tb"></table></div>
+    </article>
+    <article class="panel sticky" id="profile" aria-live="polite"></article>
+  </section>
+</main>
+<script>
+LW.nav("companies.html");
+const { fmt, esc, SECTORS } = LW;
+const COS = window.COMPANIES;
+let sector = "", q = "", sortKey = "revenue_usd_m", sortDir = -1, selId = LW.params().get("id");
+const COLS = [
+  ["short", "Company", false], ["group", "Group", false], ["tickers_str", "Ticker", false],
+  ["revenue_usd_m", "Revenue", true], ["gis_area_ha", "Mapped area", true], ["fires7d", "Fires 7 d", true],
+];
+function rows() {
+  const qq = q.toLowerCase();
+  return COS.filter((c) => (!sector || c.sector === sector) && (!qq || [c.short, c.name, c.owners, c.group, c.tickers_str, (c.provinces || []).join(" ")].join(" ").toLowerCase().includes(qq)))
+    .sort((a, b) => { const x = a[sortKey], y = b[sortKey]; if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+      return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * sortDir; });
+}
+function renderTable() {
+  const R = rows();
+  document.getElementById("count").textContent = R.length + " shown";
+  const th = COLS.map(([k, t, n]) => `<th class="sortable${n ? " n" : ""}" data-k="${k}" ${k === sortKey ? `aria-sort="${sortDir > 0 ? "ascending" : "descending"}"` : ""} tabindex="0">${t}</th>`).join("");
+  document.getElementById("tb").innerHTML = `<thead><tr>${th}</tr></thead><tbody>` + R.map((c) => `<tr class="clickable${c.id === selId ? " sel" : ""}" data-id="${c.id}" tabindex="0">
+    <td><span class="dot ${SECTORS[c.sector].key}" title="${SECTORS[c.sector].label}"></span> <b>${esc(c.short)}</b><span class="sub">${SECTORS[c.sector].label} · ${esc(c.listing_status || "")}</span></td>
+    <td>${esc(c.group)}</td><td class="mono" style="font-size:.8rem">${esc(c.tickers_str) || '<span class="na">Private</span>'}</td>
+    <td class="n">${fmt.usd(c.revenue_usd_m)}<span class="sub">${esc((c.fiscal_year || "").split(" ")[0])}</span></td>
+    <td class="n">${fmt.ha(c.gis_area_ha)}</td><td class="n">${c.fires7d ? `<span class="chip ${c.fires7d > 100 ? "pill-alert" : ""}">${fmt.n(c.fires7d)}</span>` : '<span class="na">–</span>'}</td></tr>`).join("") + "</tbody>";
+  document.querySelectorAll("#tb th").forEach((h) => { const go = () => { const k = h.dataset.k; sortDir = k === sortKey ? -sortDir : (typeof COS[0][k] === "string" ? 1 : -1); sortKey = k; renderTable(); }; h.onclick = go; h.onkeydown = (e) => e.key === "Enter" && go(); });
+  document.querySelectorAll("#tb tbody tr").forEach((r) => { const go = () => select(r.dataset.id); r.onclick = go; r.onkeydown = (e) => e.key === "Enter" && go(); });
+}
+function para(label, text) { return text ? `<div><h3>${label}</h3><p>${esc(text)}</p></div>` : ""; }
+function select(id) {
+  selId = id; LW.setQuery("?id=" + id);
+  document.querySelectorAll("#tb tbody tr").forEach((r) => r.classList.toggle("sel", r.dataset.id === id));
+  const c = COS.find((x) => x.id === id); if (!c) return;
+  const owners = (c.owner_details || []).filter((o) => o.holder).map((o) => `<tr><td>${esc(o.holder)}</td><td class="n">${o.pct != null ? o.pct + "%" : "–"}</td></tr>`).join("");
+  const subs = (c.concessions || []).map((k) => `<tr><td>${esc(k.name)}</td><td>${esc(k.province || "")}</td><td class="n">${k.area_ha ? fmt.n(k.area_ha) : "–"}</td></tr>`).join("");
+  document.getElementById("profile").innerHTML = `<div class="profile">
+    <div class="p-title"><span class="eyebrow"><span class="dot ${SECTORS[c.sector].key}"></span> ${SECTORS[c.sector].label} · ${esc(c.group)}</span>
+      <h2 style="font-size:1.4rem">${esc(c.short)}</h2><span class="note">${esc(c.name)}</span></div>
+    <div class="facts">
+      <div><b>${fmt.usd(c.revenue_usd_m)}</b><span>Revenue ${esc(c.fiscal_year || "")}</span></div>
+      <div><b>${fmt.usd(c.net_profit_usd_m)}</b><span>Net profit</span></div>
+      <div><b>${fmt.ha(c.landbank_ha)}</b><span>Reported landbank / concession</span></div>
+      <div><b>${fmt.ha(c.planted_ha)}</b><span>Reported planted</span></div>
+      <div><b>${fmt.ha(c.gis_area_ha)}</b><span>Mapped licences (${c.gis_polygons})</span></div>
+      <div><b style="${c.fires7d > 100 ? "color:var(--fire)" : ""}">${fmt.n(c.fires7d)}</b><span>Fire detections in licences, 7 d</span></div>
+    </div>
+    ${c.gis_polygons ? `<p><a href="map.html?company=${c.id}">Show ${c.gis_polygons} mapped licence${c.gis_polygons > 1 ? "s" : ""} on the map →</a></p>` : `<p class="note">No licence polygon could be attributed to this entity by name; see named subsidiaries below.</p>`}
+    <dl>
+      <dt>Controlling owners</dt><dd>${esc(c.owners) || "–"}</dd>
+      <dt>Parent group</dt><dd>${esc(c.parent_group) || "–"}</dd>
+      <dt>Listing</dt><dd>${esc(c.listing_status)}${c.tickers_str ? " · <span class='mono'>" + esc(c.tickers_str) + "</span>" : ""} · HQ ${esc(c.hq_country || "–")}</dd>
+      <dt>Revenue (local)</dt><dd>${c.revenue_local != null ? fmt.n(c.revenue_local) + " " + esc(c.revenue_currency) : "–"}<span class="sub">${esc(c.fx_note || "")}</span></dd>
+      <dt>Kalimantan / Sumatra</dt><dd>${fmt.ha(c.kalimantan_ha)} / ${fmt.ha(c.sumatra_ha)} reported · ${fmt.ha(c.gis_kal_ha)} / ${fmt.ha(c.gis_sum_ha)} mapped</dd>
+      <dt>Area note</dt><dd>${esc(c.area_note) || "–"}</dd>
+      <dt>Provinces</dt><dd>${esc((c.provinces || []).join(", ")) || "–"}</dd>
+      <dt>Production</dt><dd>${esc(c.production) || "–"}</dd>
+      <dt>Mills / employees</dt><dd>${c.mills ?? "–"} / ${c.employees ? fmt.n(c.employees) : "–"}</dd>
+      <dt>Certifications</dt><dd>${esc(c.certifications) || "–"}</dd>
+      <dt>No-deforestation policy</dt><dd>${esc(c.ndpe_policy) || "–"}</dd>
+    </dl>
+    ${c.fire_history ? `<div class="callout"><h3>Fire record</h3><p>${esc(c.fire_history)}</p></div>` : ""}
+    ${para("Controversies and legal record", c.controversies)}
+    ${owners ? `<div><h3>Shareholders</h3><table>${owners}</table></div>` : ""}
+    ${subs ? `<div><h3>Named subsidiaries / mines</h3><table class="subs"><thead><tr><th>Name</th><th>Province</th><th class="n">ha</th></tr></thead>${subs}</table></div>` : ""}
+    <div class="src"><h3>Sources</h3>${(c.sources || []).map((u) => /^https?:/.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a>` : `<span class="note">${esc(u)}</span>`).join("")}</div>
+  </div>`;
+}
+document.querySelectorAll("#seg button").forEach((b) => (b.onclick = () => {
+  sector = b.dataset.s; document.querySelectorAll("#seg button").forEach((x) => x.setAttribute("aria-pressed", x === b)); renderTable();
+}));
+document.getElementById("q").oninput = (e) => { q = e.target.value; renderTable(); };
+renderTable();
+select(selId && COS.some((c) => c.id === selId) ? selId : rows()[0].id);
+</script>
+</body>
+</html>

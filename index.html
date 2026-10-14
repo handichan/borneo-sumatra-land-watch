@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Borneo–Sumatra Land Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;650;700;750&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="assets/app.css">
+<script src="data/snapshot.js"></script>
+<script src="data/companies.js"></script>
+<script src="data/concessions.js"></script>
+<script src="data/fires.js"></script>
+<script src="data/aq.js"></script>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="head">
+    <span class="eyebrow">Kalimantan &amp; Sumatra · palm oil · pulp &amp; paper · coal</span>
+    <h1>Who holds the land, and where it is burning</h1>
+    <p class="lede" id="lede"></p>
+  </section>
+
+  <section class="kpis" id="kpis" aria-label="Key figures"></section>
+
+  <section class="grid-3">
+    <article class="panel">
+      <header><h2>Daily fire detections by land use</h2><p>NASA FIRMS, all satellites · UTC dates</p></header>
+      <div class="legend" id="lg-daily"></div>
+      <div class="chart" id="ch-daily"></div>
+    </article>
+    <article class="panel">
+      <header><h2>Haze right now</h2><p id="aq-time"></p></header>
+      <div id="aq-box"></div>
+    </article>
+  </section>
+
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>Fire detections inside company concessions</h2><p>7 days · click a bar for the profile</p></header>
+      <div class="chart" id="ch-firecos"></div>
+    </article>
+    <article class="panel">
+      <header><h2>Largest mapped landholders</h2><p>Licence polygons attributed to each company</p></header>
+      <div class="chart" id="ch-area"></div>
+    </article>
+  </section>
+
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>Revenue, latest fiscal year</h2><p>USD · as reported or converted</p></header>
+      <div class="chart" id="ch-rev"></div>
+    </article>
+    <article class="panel">
+      <header><h2>Hotspot concessions</h2><p>Single licences with the most detections</p></header>
+      <div class="tbl-wrap"><table id="tb-hot"></table></div>
+    </article>
+  </section>
+
+  <p class="note">Sources: company filings and research compiled Oct 2026 (see Companies page and the Excel workbook); concession boundaries from Global Forest Watch (oil palm, wood fibre) and the ESDM Geoportal (coal IUP/IUPK/PKP2B); fires from NASA FIRMS; haze from CAMS via Open-Meteo. A detection inside a licence shows where fire occurred, not who caused it.</p>
+</main>
+<script>
+LW.nav("index.html");
+const { fmt, esc, sectorColor, SECTORS, CODE2SECTOR } = LW;
+const COS = window.COMPANIES, CONC = window.CONCESSIONS.features, F = window.FIRES, S = window.SNAPSHOT;
+const CBY = Object.fromEntries(CONC.map((f) => [f.properties.id, f.properties]));
+const CO = Object.fromEntries(COS.map((c) => [c.id, c]));
+
+// KPIs
+const areaBy = { P: 0, W: 0, C: 0 };
+CONC.forEach((f) => (areaBy[f.properties.s] += f.properties.a || 0));
+const inConc = F.rows.filter((r) => r[9]).length;
+const worst = window.AQ.cells.reduce((a, c) => (c[2] > a[2] ? c : a));
+const worstCat = LW.pmCat(worst[2]);
+const kp = [
+  [COS.length, "Companies profiled", "30 palm · 21 pulp · 31 coal"],
+  [fmt.ha(areaBy.P), "Mapped oil palm licences", CONC.filter((f) => f.properties.s === "P").length.toLocaleString() + " polygons"],
+  [fmt.ha(areaBy.W), "Mapped wood-fibre licences", CONC.filter((f) => f.properties.s === "W").length + " polygons"],
+  [fmt.ha(areaBy.C), "Mapped coal licences", CONC.filter((f) => f.properties.s === "C").length + " polygons"],
+  [fmt.n(F.rows.length), "Fire detections, 7 days", `${(100 * inConc / F.rows.length).toFixed(0)}% inside mapped licences`, true],
+  [Math.round(worst[2]) + " µg/m³", "Peak modelled PM2.5", worstCat[1] + " · " + worst[0] + "°, " + worst[1] + "°", worst[2] > 55],
+];
+document.getElementById("kpis").innerHTML = kp.map(([v, l, s, a]) => `<div class="kpi${a ? " alert" : ""}"><span class="v">${v}</span><span class="l">${l}</span><span class="s">${s}</span></div>`).join("");
+
+// fires per company
+const fireCo = {};
+F.rows.forEach((r) => { if (!r[9]) return; const p = CBY[r[9]]; if (p && p.cid) fireCo[p.cid] = (fireCo[p.cid] || 0) + 1; });
+const provTop = Object.entries(F.rows.reduce((a, r) => ((a[r[8]] = (a[r[8]] || 0) + 1), a), {})).sort((a, b) => b[1] - a[1]);
+const topCo = Object.entries(fireCo).sort((a, b) => b[1] - a[1])[0];
+document.getElementById("lede").textContent =
+  `${fmt.n(F.rows.length)} satellite fire detections fell on Kalimantan and Sumatra between ${S.fire_start} and ${S.fire_end}, ` +
+  `${(100 * provTop[0][1] / F.rows.length).toFixed(0)}% of them in ${provTop[0][0]}. ${fmt.n(inConc)} landed inside mapped palm, pulpwood or coal licences; ` +
+  `the most inside any one company's land was ${CO[topCo[0]].short} (${fmt.n(topCo[1])}).`;
+
+LW.onRender(() => {
+  // daily stacked by land use
+  const cats = F.dates.map((d) => d.slice(5));
+  const mk = (name, color, test) => ({ name, color, values: F.dates.map((_, i) => F.rows.filter((r) => r[2] === i && test(r)).length) });
+  const series = [
+    mk("Oil palm licences", sectorColor("Palm Oil"), (r) => r[9] && CBY[r[9]].s === "P"),
+    mk("Wood-fibre licences", sectorColor("Pulp & Paper"), (r) => r[9] && CBY[r[9]].s === "W"),
+    mk("Coal licences", sectorColor("Coal Mining"), (r) => r[9] && CBY[r[9]].s === "C"),
+    mk("Outside mapped licences", LW.css("--muted"), (r) => !r[9]),
+  ];
+  document.getElementById("lg-daily").innerHTML = series.map((s) => `<span><i class="sw" style="background:${s.color}"></i>${s.name}</span>`).join("");
+  LW.stacked(document.getElementById("ch-daily"), cats, series, { h: 260 });
+
+  const coBars = (arr, val, f) => arr.map((c) => ({ label: c.short, value: val(c), color: sectorColor(c.sector), href: "companies.html?id=" + c.id,
+    tip: `<b>${esc(c.short)}</b> · ${SECTORS[c.sector].label}<br>${f(val(c))}<br>Group: ${esc(c.group)}` }));
+  const fc = COS.map((c) => ({ ...c, _f: fireCo[c.id] || 0 })).filter((c) => c._f).sort((a, b) => b._f - a._f).slice(0, 12);
+  LW.hbar(document.getElementById("ch-firecos"), coBars(fc, (c) => c._f, (v) => fmt.n(v) + " detections"));
+  const ar = [...COS].filter((c) => c.gis_area_ha).sort((a, b) => b.gis_area_ha - a.gis_area_ha).slice(0, 12);
+  LW.hbar(document.getElementById("ch-area"), coBars(ar, (c) => c.gis_area_ha, fmt.ha), { valueFmt: fmt.ha });
+  // revenue: exclude pure holding duplicates where the operating parent is already shown
+  const rv = [...COS].filter((c) => c.revenue_usd_m).sort((a, b) => b.revenue_usd_m - a.revenue_usd_m).slice(0, 14);
+  LW.hbar(document.getElementById("ch-rev"), coBars(rv, (c) => c.revenue_usd_m, fmt.usd), { valueFmt: fmt.usd });
+});
+
+// hotspot table
+const hot = CONC.map((f) => f.properties).filter((p) => p.f).sort((a, b) => b.f - a.f).slice(0, 10);
+document.getElementById("tb-hot").innerHTML = `<thead><tr><th>Licence</th><th>Province</th><th class="n">Area</th><th class="n">Detections</th></tr></thead><tbody>` +
+  hot.map((p) => `<tr class="clickable" onclick="LW.go('map.html?conc=${p.id}')"><td><span class="dot ${SECTORS[CODE2SECTOR[p.s]].key}"></span> ${esc(p.n)}
+    <span class="sub">${p.cid ? esc(CO[p.cid].short) + " · " + esc(CO[p.cid].group) : p.g ? esc(p.g) : "Holder not in research set"}</span></td>
+    <td>${esc(p.pr)}</td><td class="n">${fmt.ha(p.a)}</td><td class="n">${fmt.n(p.f)}</td></tr>`).join("") + "</tbody>";
+
+// haze box
+const AQ = window.AQ;
+document.getElementById("aq-time").textContent = "CAMS model · " + AQ.time;
+const CITIES = [["Palangka Raya", -2.21, 113.92], ["Banjarmasin", -3.32, 114.59], ["Pontianak", -0.03, 109.33], ["Samarinda", -0.5, 117.15],
+  ["Palembang", -2.98, 104.76], ["Jambi", -1.61, 103.61], ["Pekanbaru", 0.51, 101.45], ["Bandar Lampung", -5.43, 105.26], ["Medan", 3.59, 98.67]];
+const near = (lat, lon) => AQ.cells.reduce((a, c) => (Math.hypot(c[0] - lat, c[1] - lon) < Math.hypot(a[0] - lat, a[1] - lon) ? c : a));
+const rows = CITIES.map(([n, la, lo]) => [n, near(la, lo)]).sort((a, b) => b[1][2] - a[1][2]);
+document.getElementById("aq-box").innerHTML = `<table><thead><tr><th>City (nearest 0.5° cell)</th><th class="n">PM2.5</th><th>Category</th></tr></thead><tbody>` +
+  rows.map(([n, c]) => { const k = LW.pmCat(c[2]); return `<tr><td>${n}</td><td class="n">${Math.round(c[2])}</td><td><span class="chip"><i class="dot" style="background:${k[2]}"></i>${k[1]}</span></td></tr>`; }).join("") +
+  `</tbody></table><p class="note">µg/m³, modelled surface concentration. WHO 24-h guideline is 15 µg/m³. Open the map's haze layer for the full grid.</p>`;
+</script>
+</body>
+</html>

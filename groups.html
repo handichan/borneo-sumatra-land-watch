@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Conglomerates · Land Watch</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;650;700;750&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .card h3 { font-size: 1.05rem; }
+  .card .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bar { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: var(--surface-2); gap: 2px; }
+  .bar i { display: block; height: 100%; }
+  .card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 0.88rem; }
+  .card li { display: flex; justify-content: space-between; gap: 10px; }
+  .card li a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 0.78rem; color: var(--muted); }
+  .card .stats b { display: block; font-family: var(--font-display); font-size: 1.05rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+</style>
+<script src="data/snapshot.js"></script>
+<script src="data/companies.js"></script>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="head">
+    <span class="eyebrow">Ultimate controllers</span>
+    <h1>Conglomerates across palm, pulp and coal</h1>
+    <p class="lede">Several family groups hold land in more than one sector. Sinar Mas, for example, controls oil palm (GAR), pulpwood (APP) and coal (GEMS, Berau). Each card adds up the licences mapped to its companies. Revenue is the sum of listed entities and double-counts parents and subsidiaries.</p>
+  </section>
+  <article class="panel">
+    <header><h2>Mapped licence area by group</h2><p>Top 15 groups · stacked by sector</p></header>
+    <div class="legend"><span><i class="sw palm"></i>Palm oil</span><span><i class="sw pulp"></i>Pulp &amp; paper</span><span><i class="sw coal"></i>Coal</span></div>
+    <div class="chart" id="ch"></div>
+  </article>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Filter groups" id="seg">
+      <button id="f-all" aria-pressed="true" data-m="all">All groups</button>
+      <button id="f-multi" aria-pressed="false" data-m="multi">Multi-sector only</button>
+    </div>
+  </div>
+  <section class="cards" id="cards"></section>
+</main>
+<script>
+LW.nav("groups.html");
+const { fmt, esc, SECTORS, sectorColor } = LW;
+const G = {};
+window.COMPANIES.forEach((c) => {
+  const g = (G[c.group] ||= { name: c.group, cos: [], area: { "Palm Oil": 0, "Pulp & Paper": 0, "Coal Mining": 0 }, rev: 0, fires: 0 });
+  g.cos.push(c); g.area[c.sector] += c.gis_area_ha || 0; g.rev += c.revenue_usd_m || 0; g.fires += c.fires7d || 0;
+});
+const groups = Object.values(G).map((g) => ({ ...g, total: Object.values(g.area).reduce((a, b) => a + b, 0), sectors: [...new Set(g.cos.map((c) => c.sector))] }))
+  .sort((a, b) => b.total - a.total || b.rev - a.rev);
+
+LW.onRender(() => {
+  const el = document.getElementById("ch"), top = groups.filter((g) => g.total).slice(0, 15);
+  const W = Math.max(el.clientWidth, 320), lw = Math.min(200, W * 0.38), vw = 70, bw = W - lw - vw, rh = 26, mx = top[0].total;
+  let s = `<svg viewBox="0 0 ${W} ${top.length * rh + 4}" role="img">`;
+  top.forEach((g, i) => {
+    const y = i * rh + 3; let x = lw;
+    const tip = `<b>${esc(g.name)}</b><br>` + Object.entries(g.area).filter(([, v]) => v).map(([k, v]) => `${SECTORS[k].label}: ${fmt.ha(v)}`).join("<br>") + `<br>Fires in licences, 7 d: ${fmt.n(g.fires)}`;
+    s += `<g data-tip="${esc(tip)}"><rect x="0" y="${y - 2}" width="${W}" height="${rh}" fill="transparent"/><text x="${lw - 8}" y="${y + rh / 2}" text-anchor="end" dominant-baseline="middle">${esc(g.name)}</text>`;
+    Object.entries(g.area).forEach(([k, v]) => { if (!v) return; const w = (v / mx) * bw; s += `<rect x="${x}" y="${y + 4}" width="${Math.max(1, w - 2)}" height="${rh - 12}" rx="3" fill="${sectorColor(k)}"/>`; x += w; });
+    s += `<text class="val" x="${x + 4}" y="${y + rh / 2}" dominant-baseline="middle">${fmt.ha(g.total)}</text></g>`;
+  });
+  el.innerHTML = s + "</svg>"; LW.bindTips(el);
+});
+
+function cards(mode) {
+  document.getElementById("cards").innerHTML = groups.filter((g) => mode === "all" || g.sectors.length > 1).map((g) => `<article class="card">
+    <div class="row">${g.sectors.map((s) => `<span class="chip"><i class="dot ${SECTORS[s].key}"></i>${SECTORS[s].label}</span>`).join("")}</div>
+    <h3>${esc(g.name)}</h3>
+    ${g.total ? `<div class="bar" aria-hidden="true">${Object.entries(g.area).filter(([, v]) => v).map(([k, v]) => `<i style="width:${(100 * v) / g.total}%;background:${sectorColor(k)}"></i>`).join("")}</div>` : ""}
+    <div class="stats"><div><b>${fmt.ha(g.total)}</b>mapped</div><div><b>${g.rev ? fmt.usd(g.rev) : "–"}</b>revenue (sum)</div><div><b style="${g.fires > 100 ? "color:var(--fire)" : ""}">${fmt.n(g.fires)}</b>fires 7 d</div></div>
+    <ul>${g.cos.map((c) => `<li><a href="companies.html?id=${c.id}"><span class="dot ${SECTORS[c.sector].key}"></span> ${esc(c.short)}</a><span class="mono note">${esc(c.tickers_str || "private")}</span></li>`).join("")}</ul>
+  </article>`).join("");
+}
+document.querySelectorAll("#seg button").forEach((b) => (b.onclick = () => { document.querySelectorAll("#seg button").forEach((x) => x.setAttribute("aria-pressed", x === b)); cards(b.dataset.m); }));
+cards("all");
+</script>
+</body>
+</html>

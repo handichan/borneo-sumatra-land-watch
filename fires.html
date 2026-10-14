@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fires &amp; Haze · Land Watch</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;650;700;750&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="assets/app.css">
+<script src="data/snapshot.js"></script>
+<script src="data/companies.js"></script>
+<script src="data/concessions.js"></script>
+<script src="data/fires.js"></script>
+<script src="data/aq.js"></script>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="head">
+    <span class="eyebrow">NASA FIRMS · CAMS haze model</span>
+    <h1>Fires and haze, last seven days</h1>
+    <p class="lede" id="lede"></p>
+  </section>
+  <section class="kpis" id="kpis"></section>
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>Detections per day by province</h2><p>Top four provinces, the rest grouped</p></header>
+      <div class="legend" id="lg-prov"></div>
+      <div class="chart" id="ch-prov"></div>
+    </article>
+    <article class="panel">
+      <header><h2>Detections by province</h2><p>Share inside mapped licences</p></header>
+      <div class="tbl-wrap"><table id="tb-prov"></table></div>
+    </article>
+  </section>
+  <article class="panel">
+    <header><h2>Fires inside company licences</h2><p>Detections per 10,000 ha shows intensity regardless of company size. Click a row for the map.</p></header>
+    <div class="controls" style="margin-bottom:10px">
+      <div class="seg" role="group" aria-label="Sector" id="seg">
+        <button id="fs-all" data-s="" aria-pressed="true">All</button><button id="fs-palm" data-s="Palm Oil" aria-pressed="false">Palm oil</button>
+        <button id="fs-pulp" data-s="Pulp & Paper" aria-pressed="false">Pulp &amp; paper</button><button id="fs-coal" data-s="Coal Mining" aria-pressed="false">Coal</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table id="tb-co"></table></div>
+  </article>
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>Worst haze cells now</h2><p id="aq-t"></p></header>
+      <div class="tbl-wrap"><table id="tb-aq"></table></div>
+    </article>
+    <article class="panel">
+      <header><h2>Haze categories across both islands</h2><p>Share of 0.5° land-and-sea cells</p></header>
+      <div class="chart" id="ch-aq"></div>
+      <p class="note">PM2.5 categories follow US EPA 2024 breakpoints. Modelled values (CAMS) smooth out local peaks; ground monitors near active peat fires often read higher.</p>
+    </article>
+  </section>
+</main>
+<script>
+LW.nav("fires.html");
+const { fmt, esc, SECTORS, sectorColor } = LW;
+const F = window.FIRES, COS = window.COMPANIES, CO = Object.fromEntries(COS.map((c) => [c.id, c]));
+const CBY = Object.fromEntries(window.CONCESSIONS.features.map((f) => [f.properties.id, f.properties]));
+const prov = {}; F.rows.forEach((r) => { const p = (prov[r[8]] ||= { n: 0, inside: 0, frp: 0, days: Array(F.dates.length).fill(0) }); p.n++; p.days[r[2]]++; p.frp += r[6]; if (r[9]) p.inside++; });
+const P = Object.entries(prov).sort((a, b) => b[1].n - a[1].n);
+const kal = F.rows.filter((r) => ["Central Kalimantan", "East Kalimantan", "North Kalimantan", "South Kalimantan", "West Kalimantan"].includes(r[8])).length;
+const hi = F.rows.filter((r) => r[5] === 2).length, night = F.rows.filter((r) => !r[7]).length;
+const peakDay = F.dates.map((d, i) => [d, F.rows.filter((r) => r[2] === i).length]).sort((a, b) => b[1] - a[1])[0];
+document.getElementById("lede").textContent = `${fmt.n(F.rows.length)} detections from four satellites. ${P[0][0]} alone had ${fmt.n(P[0][1].n)}, and ${P[1][0]} ${fmt.n(P[1][1].n)}. ` +
+  `The busiest day was ${peakDay[0]} with ${fmt.n(peakDay[1])}. Night-time detections (${(100 * night / F.rows.length).toFixed(0)}%) are typical of smouldering peat.`;
+document.getElementById("kpis").innerHTML = [
+  [fmt.n(F.rows.length), "Detections, 7 days", "VIIRS ×3 + MODIS", true], [fmt.n(kal), "Kalimantan", (100 * kal / F.rows.length).toFixed(0) + "% of total"],
+  [fmt.n(F.rows.length - kal), "Sumatra", (100 * (F.rows.length - kal) / F.rows.length).toFixed(0) + "% of total"],
+  [fmt.n(night), "Night-time", "smouldering signal"], [fmt.n(hi), "High confidence", "VIIRS high / MODIS ≥80"], [fmt.n(F.rows.filter((r) => r[9]).length), "Inside mapped licences", "palm, pulp or coal"],
+].map(([v, l, s, a]) => `<div class="kpi${a ? " alert" : ""}"><span class="v">${v}</span><span class="l">${l}</span><span class="s">${s}</span></div>`).join("");
+
+LW.onRender(() => {
+  const pal = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"];
+  const series = P.slice(0, 4).map(([n, p], i) => ({ name: n, color: pal[i], values: p.days }));
+  series.push({ name: "Other provinces", color: LW.css("--muted"), values: F.dates.map((_, i) => P.slice(4).reduce((a, [, p]) => a + p.days[i], 0)) });
+  document.getElementById("lg-prov").innerHTML = series.map((s) => `<span><i class="sw" style="background:${s.color}"></i>${s.name}</span>`).join("");
+  LW.stacked(document.getElementById("ch-prov"), F.dates.map((d) => d.slice(5)), series, { h: 270 });
+
+  const counts = LW.PM.map(() => 0); window.AQ.cells.forEach((c) => counts[LW.PM.indexOf(LW.pmCat(c[2]))]++);
+  LW.hbar(document.getElementById("ch-aq"), LW.PM.map(([, l, col], i) => ({ label: l, value: counts[i], color: col, tip: `<b>${l}</b><br>${counts[i]} cells (${(100 * counts[i] / window.AQ.cells.length).toFixed(0)}%)` })), { labelW: 150 });
+});
+document.getElementById("tb-prov").innerHTML = `<thead><tr><th>Province</th><th class="n">Detections</th><th class="n">Inside licences</th><th class="n">Mean FRP (MW)</th></tr></thead><tbody>` +
+  P.map(([n, p]) => `<tr><td>${esc(n)}</td><td class="n">${fmt.n(p.n)}</td><td class="n">${(100 * p.inside / p.n).toFixed(0)}%</td><td class="n">${(p.frp / p.n).toFixed(1)}</td></tr>`).join("") + "</tbody>";
+
+let sec = "";
+function coTable() {
+  const R = COS.filter((c) => c.fires7d && (!sec || c.sector === sec)).map((c) => ({ ...c, rate: c.gis_area_ha ? (c.fires7d / c.gis_area_ha) * 1e4 : 0 })).sort((a, b) => b.fires7d - a.fires7d);
+  document.getElementById("tb-co").innerHTML = `<thead><tr><th>Company</th><th>Group</th><th class="n">Mapped area</th><th class="n">Detections</th><th class="n">Per 10,000 ha</th><th>Recorded fire history</th></tr></thead><tbody>` +
+    R.map((c) => `<tr class="clickable" onclick="LW.go('map.html?company=${c.id}')"><td><span class="dot ${SECTORS[c.sector].key}"></span> <b>${esc(c.short)}</b></td><td>${esc(c.group)}</td>
+      <td class="n">${fmt.ha(c.gis_area_ha)}</td><td class="n">${fmt.n(c.fires7d)}</td><td class="n">${c.rate.toFixed(1)}</td>
+      <td style="max-width:520px;font-size:.82rem;color:var(--ink-2)">${esc((c.fire_history || "").slice(0, 220))}${(c.fire_history || "").length > 220 ? "…" : ""}</td></tr>`).join("") + "</tbody>";
+}
+document.querySelectorAll("#seg button").forEach((b) => (b.onclick = () => { sec = b.dataset.s; document.querySelectorAll("#seg button").forEach((x) => x.setAttribute("aria-pressed", x === b)); coTable(); }));
+coTable();
+
+document.getElementById("aq-t").textContent = "CAMS via Open-Meteo · " + window.AQ.time;
+const worst = [...window.AQ.cells].sort((a, b) => b[2] - a[2]).slice(0, 10);
+document.getElementById("tb-aq").innerHTML = `<thead><tr><th>Cell centre</th><th class="n">PM2.5</th><th class="n">AOD</th><th class="n">US AQI</th><th>Category</th></tr></thead><tbody>` +
+  worst.map((c) => { const k = LW.pmCat(c[2]); return `<tr><td class="mono">${c[0].toFixed(1)}°, ${c[1].toFixed(1)}°</td><td class="n">${Math.round(c[2])}</td><td class="n">${c[4]}</td><td class="n">${c[6]}</td><td><span class="chip"><i class="dot" style="background:${k[2]}"></i>${k[1]}</span></td></tr>`; }).join("") + "</tbody>";
+</script>
+</body>
+</html>
