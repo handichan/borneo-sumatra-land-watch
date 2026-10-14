@@ -352,7 +352,7 @@ map.on("click", (e) => {
     html += `<div class="pp"${html ? ' style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px"' : ""}><h4><span class="dot ${SECTORS[CODE2SECTOR[p.s]].key}"></span> ${esc(p.n)}</h4>
       <dl><dt>Holder</dt><dd>${esc(p.c)}</dd><dt>Company</dt><dd>${p.cid ? `<a href="companies.html?id=${p.cid}">${esc(p.cn)}</a>` : '<span class="na">not in research set</span>'}</dd>
       <dt>Group</dt><dd>${esc(p.gg) || "–"}</dd><dt>Licence</dt><dd>${esc(p.l)}${p.v ? "<br>" + esc(p.v) : ""}</dd><dt>Area</dt><dd>${fmt.n(p.a)} ha</dd><dt>Province</dt><dd>${esc(p.pr)}</dd>
-      <dt>Fires 7 d</dt><dd>${fmt.n(p.f)}</dd>${p.ws ? `<dt>WALHI 2026</dt><dd>${p.w ? fmt.n(p.w) + " hotspots · " : ""}${esc(p.ws)} <a href="walhi.html">›</a></dd>` : ""}<dt>Source</dt><dd style="font-size:.75rem">${esc(p.src)}</dd></dl></div>`;
+      <dt>Fires 7 d</dt><dd>${fmt.n(p.f)}</dd>${p.ws ? `<dt>WALHI 2026</dt><dd>${p.w ? fmt.n(p.w) + " hotspots · " : ""}${esc(p.ws)} <a href="fires.html#walhi">›</a></dd>` : ""}<dt>Source</dt><dd style="font-size:.75rem">${esc(p.src)}</dd></dl></div>`;
   } else highlight("");
   if (pk) {
     const p = pk.properties;

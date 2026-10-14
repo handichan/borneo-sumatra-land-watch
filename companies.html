@@ -46,7 +46,7 @@
 function walhiBox(c) {
   const R = (window.WALHI ? window.WALHI.validation : []).filter((r) => r.cids.includes(c.id));
   if (!R.length) return "";
-  return `<div class="callout"><h3>Named in WALHI's 2026 fire-actor report</h3><ul style="margin:0;padding-left:18px">${R.map((r) => `<li>${LW.esc(r.name)}: ${r.hotspots == null ? "field-verified burn" : LW.fmt.n(r.hotspots) + " hotspots (" + r.period + ")"} · ${LW.esc(r.src)}</li>`).join("")}</ul><p class="note" style="margin:6px 0 0"><a href="walhi.html">See the cross-check</a></p></div>`;
+  return `<div class="callout"><h3>Named in WALHI's 2026 fire-actor report</h3><ul style="margin:0;padding-left:18px">${R.map((r) => `<li>${LW.esc(r.name)}: ${r.hotspots == null ? "field-verified burn" : LW.fmt.n(r.hotspots) + " hotspots (" + r.period + ")"} · ${LW.esc(r.src)}</li>`).join("")}</ul><p class="note" style="margin:6px 0 0"><a href="fires.html#walhi">See the cross-check</a></p></div>`;
 }
 LW.nav("companies.html");
 document.getElementById("eyebrow").textContent = window.COMPANIES.length + " companies and groups";

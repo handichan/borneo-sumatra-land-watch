@@ -12,7 +12,9 @@
 <script src="data/concessions.js"></script>
 <script src="data/fires.js"></script>
 <script src="data/aq.js"></script>
+<script src="data/walhi.js"></script>
 <script src="assets/common.js"></script>
+<script src="assets/walhi-cards.js"></script>
 </head>
 <body>
 <main class="wrap">
@@ -32,7 +34,7 @@
     </article>
     <article class="panel">
       <header><h2>Haze right now</h2><p id="aq-time"></p></header>
-      <div id="aq-box"></div>
+      <div id="aq-box" class="tbl-wrap"></div>
     </article>
   </section>
 
@@ -40,6 +42,20 @@
     <header><h2>By island</h2><p>Mapped licence area and 7-day fire detections</p></header>
     <div class="tbl-wrap"><table id="tb-isl"></table></div>
   </article>
+
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>The 2026 fire season so far</h2><p><span class="src-tag">WALHI 2026 report</span> · High-confidence hotspots counted by WALHI, January to September</p></header>
+      <section class="kpis kpis-2" id="w-season"></section>
+      <h3 style="margin:14px 0 6px;font-size:.95rem">Provinces with the most hotspots inside licences</h3>
+      <div id="w-prov"></div>
+    </article>
+    <article class="panel">
+      <header><h2>Merauke food &amp; energy estate (PSN)</h2><p><span class="src-tag">WALHI 2026 report</span> · 807 hotspots, 1 Jan – 31 Aug 2026</p></header>
+      <div class="chart" id="w-mer"></div>
+      <p class="note">Six sugar and bioethanol companies account for 133 hotspots, traced to First Resources (Fangiono family) and Wilmar. The other 674 are in food-estate clusters run directly by the Coordinating Ministry for Food and the Agriculture Ministry; part of the Ilwayab cluster is worked by Jhonlin Group (Haji Isam) under state assignment.</p>
+    </article>
+  </section>
 
   <section class="grid-2">
     <article class="panel">
@@ -63,10 +79,11 @@
     </article>
   </section>
 
-  <p class="note">Sources: company filings and research compiled Oct 2026 (see Companies page and the Excel workbook); concession boundaries from Global Forest Watch (oil palm, wood fibre, natural-forest logging) and the ESDM Geoportal (coal, metal and quarry IUP/IUPK/PKP2B licences; forest-area use permits); fires from NASA FIRMS; haze from CAMS via Open-Meteo. A detection inside a licence shows where fire occurred, not who caused it.</p>
+  <p class="note">Sources: company filings and research compiled Oct 2026 (see Companies page and the Excel workbook); concession boundaries from Global Forest Watch (oil palm, wood fibre, natural-forest logging) and the ESDM Geoportal (coal, metal and quarry IUP/IUPK/PKP2B licences; forest-area use permits); fires from NASA FIRMS; 2026 season figures, ownership tracing and political links from WALHI's Oct 2026 report <i>Siapa di Balik Api?</i>; haze from CAMS via Open-Meteo. A detection inside a licence shows where fire occurred, not who caused it.</p>
 </main>
 <script>
 LW.nav("index.html");
+LW.walhi.season("w-season"); LW.walhi.provinces("w-prov"); LW.onRender(() => LW.walhi.merauke("w-mer"));
 const { fmt, esc, sectorColor, SECTORS, CODE2SECTOR } = LW;
 const COS = window.COMPANIES, CONC = window.CONCESSIONS.features, F = window.FIRES, S = window.SNAPSHOT;
 const CBY = Object.fromEntries(CONC.map((f) => [f.properties.id, f.properties]));

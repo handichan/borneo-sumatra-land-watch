@@ -11,7 +11,9 @@
 <script src="data/concessions.js"></script>
 <script src="data/fires.js"></script>
 <script src="data/aq.js"></script>
+<script src="data/walhi.js"></script>
 <script src="assets/common.js"></script>
+<script src="assets/walhi-cards.js"></script>
 </head>
 <body>
 <main class="wrap">
@@ -50,9 +52,27 @@
       <p class="note">PM2.5 categories follow US EPA 2024 breakpoints. Modelled values (CAMS) smooth out local peaks; ground monitors near active peat fires often read higher.</p>
     </article>
   </section>
+  <article class="panel" id="walhi">
+    <header><h2>WALHI's top-hotspot companies, checked against this dataset</h2><p><span class="src-tag">WALHI 2026 report</span> · Each company WALHI names, matched by licence-holder name to the mapped licences here. WALHI counts are high-confidence hotspots for 2026, not this page's 7-day snapshot.</p></header>
+    <div class="controls" style="margin-bottom:10px"><div class="seg" role="group" aria-label="Status" id="w-seg"></div></div>
+    <div class="tbl-wrap" style="max-height:560px;overflow:auto"><table id="w-val"></table></div>
+    <p class="note">Consistent: WALHI's group matches ours. New from WALHI: the report gave an owner we lacked or overturned ours, and the dataset now uses it. Dataset adds owner: WALHI could not identify the owner but our licence data names one. Differs: the two disagree and we kept ours.</p>
+  </article>
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>Burns verified in the field</h2><p><span class="src-tag">WALHI 2026 report</span> · WALHI regional offices, with Sentinel-2 checks</p></header>
+      <div class="tbl-wrap"><table id="w-field"></table></div>
+    </article>
+    <article class="panel">
+      <header><h2>Caveats in the WALHI report</h2><p><span class="src-tag">WALHI 2026 report</span> · Found while transcribing; check before citing</p></header>
+      <ul class="issues" id="w-iss"></ul>
+      <p class="note" id="w-src"></p>
+    </article>
+  </section>
 </main>
 <script>
 LW.nav("fires.html");
+LW.walhi.validation("w-val", "w-seg"); LW.walhi.field("w-field"); LW.walhi.issues("w-iss"); LW.walhi.source("w-src");
 const { fmt, esc, SECTORS, sectorColor } = LW;
 const F = window.FIRES, COS = window.COMPANIES, CO = Object.fromEntries(COS.map((c) => [c.id, c]));
 const CBY = Object.fromEntries(window.CONCESSIONS.features.map((f) => [f.properties.id, f.properties]));

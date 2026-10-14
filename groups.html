@@ -21,7 +21,9 @@
 </style>
 <script src="data/snapshot.js"></script>
 <script src="data/companies.js"></script>
+<script src="data/walhi.js"></script>
 <script src="assets/common.js"></script>
+<script src="assets/walhi-cards.js"></script>
 </head>
 <body>
 <main class="wrap">
@@ -35,6 +37,23 @@
     <div class="legend" id="lg"></div>
     <div class="chart" id="ch"></div>
   </article>
+  <article class="panel">
+    <header><h2>Politically exposed people behind burning concessions</h2><p><span class="src-tag">WALHI 2026 report</span> · People close to the President in the ownership or management of three companies with 2026 fires</p></header>
+    <div class="people" id="w-pep"></div>
+  </article>
+  <section class="grid-2">
+    <article class="panel">
+      <header><h2>Fire-linked firms by foreign parent</h2><p><span class="src-tag">WALHI 2026 report</span> · Of 372 companies WALHI reported to the President over fires</p></header>
+      <div class="legend"><span><i class="sw" style="background:#2a78d6"></i>Singapore</span><span><i class="sw" style="background:#1baf7a"></i>Malaysia</span></div>
+      <div class="chart" id="w-grp"></div>
+      <p class="note">Sinar Mas, Wilmar and Salim are Indonesian groups, but their holding companies are listed in Singapore.</p>
+    </article>
+    <article class="panel">
+      <header><h2>Ownership traced offshore</h2><p><span class="src-tag">WALHI 2026 report</span> · Top-hotspot companies whose parents sit outside Indonesia</p></header>
+      <div class="tbl-wrap"><table id="w-for"></table></div>
+      <p class="note">Mayawana Persada's owners are in the British Virgin Islands and Samoa, so its beneficial owner cannot be identified. WALHI could not trace the owners of 10 of the 30 worst-hit companies.</p>
+    </article>
+  </section>
   <div class="controls">
     <div class="seg" role="group" aria-label="Filter groups" id="seg">
       <button id="f-all" aria-pressed="true" data-m="all">All groups</button>
@@ -45,6 +64,7 @@
 </main>
 <script>
 LW.nav("groups.html");
+LW.walhi.pep("w-pep"); LW.walhi.foreign("w-for"); LW.onRender(() => LW.walhi.groups("w-grp"));
 const { fmt, esc, SECTORS, sectorColor } = LW;
 const G = {};
 window.COMPANIES.forEach((c) => {
