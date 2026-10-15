@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Karhutla on X · Land Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;650;700;750&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="assets/app.css">
+<script src="data/snapshot.js"></script>
+<script src="assets/common.js"></script>
+<style>
+/* Page-specific styles for the X / social-listening page; colours come from app.css tokens. */
+.social{max-width:960px;gap:44px}
+.social{--accent:var(--coal);--accent-soft:var(--surface-2);--bar:var(--coal);--bar2:var(--line);
+  --ispu-baik:#2E8B57;--ispu-sedang:#2F6DB5;--ispu-ts:#D9A400;--ispu-sts:#C0392B;--ispu-bhy:var(--ink)}
+.social p{margin:0;max-width:72ch}
+.social section{display:flex;flex-direction:column;gap:14px}
+.social h2{font-size:1.35rem}
+.social a{color:var(--ink)}
+.x-head h1{font-size:clamp(1.8rem,4vw,2.4rem)}
+.x-head{gap:14px}
+.ispu{display:flex;flex-direction:column;gap:6px;max-width:560px}
+.ispu-bar{display:grid;grid-template-columns:1fr 1fr 1.4fr 1.8fr 2.6fr;height:10px;border-radius:2px;overflow:hidden}
+.ispu-bar span:nth-child(1){background:var(--ispu-baik)}.ispu-bar span:nth-child(2){background:var(--ispu-sedang)}
+.ispu-bar span:nth-child(3){background:var(--ispu-ts)}.ispu-bar span:nth-child(4){background:var(--ispu-sts)}.ispu-bar span:nth-child(5){background:var(--ispu-bhy)}
+.ispu-cap,.legend{font:400 .78rem/1.45 var(--font-data);color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stats div{background:var(--surface);padding:14px 16px;display:grid;gap:2px}
+.stats b{font:700 1.55rem/1.2 var(--font-display);font-variant-numeric:tabular-nums}
+.stats span{font-size:.8rem;color:var(--ink-2)}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ol.findings{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:f}
+ol.findings li{display:grid;grid-template-columns:2rem minmax(0,1fr);gap:8px;counter-increment:f}
+ol.findings li::before{content:counter(f);font:600 .9rem/1.5 var(--font-data);color:var(--accent)}
+ol.findings b{font-weight:700}
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px 8px;overflow-x:auto}
+.chart svg{display:block;width:100%;min-width:560px;height:auto}
+.chart svg text{fill:var(--muted);font:11px var(--font-data)}
+.chart svg .ann{fill:var(--ink);font:12px var(--font-body)}
+.wk-key{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 20px;font-size:.88rem}
+.wk-key b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--surface);font:600 .72rem var(--font-data);margin-right:6px}
+@media (max-width:640px){.wk-key{grid-template-columns:minmax(0,1fr)}}
+.themes{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.trow{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr) 4.2rem 3.4rem;gap:10px;align-items:center;font-size:.9rem}
+.trow .track{height:12px;background:var(--surface-2);position:relative;border-radius:2px;overflow:hidden}
+.trow .fill{position:absolute;inset:0 auto 0 0;background:var(--bar)}
+.trow .num{font:400 .82rem var(--font-data);font-variant-numeric:tabular-nums;text-align:right}
+.trow .n{font:400 .78rem var(--font-data);color:var(--muted);text-align:right}
+.thead{font:700 .7rem/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:560px){.trow{grid-template-columns:minmax(0,1fr) 3.6rem 3rem}.trow .track{grid-column:1/-1;grid-row:2}}
+.lens{border-top:1px solid var(--line);padding-top:20px;display:flex;flex-direction:column;gap:12px}
+.lens .head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.posts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.posts{grid-template-columns:minmax(0,1fr)}}
+.post{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.post .who{font:400 .78rem var(--font-data);color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.post p{font-size:.92rem}
+.post a{font:400 .76rem var(--font-data)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.tbl table{min-width:600px}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl td.num{font-family:var(--font-data);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font:400 .8rem var(--font-data);border:1px solid var(--line);border-radius:99px;padding:3px 10px;background:var(--surface)}
+.tag em{font-style:normal;color:var(--muted)}
+ul.plain{margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:6px;max-width:72ch}
+.social footer{border-top:1px solid var(--line);padding-top:16px;font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main class="wrap social">
+<section class="head x-head">
+  <span class="eyebrow">Social listening · X / Twitter · 10 Aug – 15 Oct 2026</span>
+  <h1>Karhutla on X, 2026</h1>
+  <p class="lede">What people on X are saying about Indonesia's 2026 forest and land fires: who is blamed, what hurts, how the state responds, and how little of the conversation reaches recovery.</p>
+  <div class="ispu">
+    <div class="ispu-bar" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="ispu-cap">ISPU scale: baik · sedang · tidak sehat · sangat tidak sehat · berbahaya. Banjarbaru hit PM2.5 389.4 µg/m³ on 19 Aug (berbahaya), as reported in a widely shared post.</div>
+  </div>
+  <div class="stats">
+    <div><b>1,138</b><span>unique posts collected</span></div>
+    <div><b>823</b><span>distinct accounts</span></div>
+    <div><b>32.4M</b><span>views across sample</span></div>
+    <div><b>85%</b><span>posts in Bahasa Indonesia</span></div>
+  </div>
+</section>
+
+<section id="findings">
+  <span class="eyebrow">Key findings</span>
+  <h2>Anger at officials travels furthest; corporate blame is constant but quieter</h2>
+  <ol class="findings">
+    <li><span><b>Two waves, not one.</b> Engagement peaked in mid–late August (Kalimantan haze, #SaveKalimantan, WALHI's concession data) and again from 8 October, when Palangka Raya turned red and posts about Japan's aid being halted went viral. The second wave is still rising on 15 Oct.</span></li>
+    <li><span><b>Governance outrage drives reach.</b> The most-shared posts attack the President, the Forestry Minister and Kalimantan governors: fires burning for three months, a governor's joke when asked about karhutla, unpaid volunteer firefighters, and the claim that national TV ignores the story.</span></li>
+    <li><span><b>Health and daily hardship are the emotional core.</b> ISPA counts, closed schools, children bathing in rivers for lack of clean water, and power cuts carry about 20% of all engagement. Ministry of Health figures cited on X rose from 174,694 ISPA cases (to 21 Sep) to 283,270 (14 Oct).</span></li>
+    <li><span><b>Corporate responsibility is posted often but engages less.</b> 199 posts mention concessions or companies, citing WALHI's finding that 71–74% of Kalimantan hotspots fall in concessions and naming firms (Sinar Mas, Medco and others). The #KarhutlaKorporasi push from Greenpeace and Pantau Gambut is mostly media and NGO accounts.</span></li>
+    <li><span><b>Recovery is almost absent.</b> “Recovery” on X means orangutan rescue (290 wild animals in care, 96 orangutans) and suspicion that burned land is being replanted with oil palm or acacia. Peat rewetting and restoration get few posts; one notable thread blames the dissolution of the peat restoration agency.</span></li>
+    <li><span><b>The haze is a regional story.</b> Malaysian and Singaporean users joke about “haze special effects” at F1, protest at the Indonesian embassy, and note Jakarta did not answer offers of help. Indonesian users answer that Malaysian and Singaporean companies also hold burning concessions.</span></li>
+    <li><span><b>Small personal accounts amplify the most.</b> Many of the highest-engagement posts come from personal and fandom accounts with a few thousand followers, using all-caps &ldquo;UP UP UP&rdquo; calls to keep the topic trending. Big media accounts reach millions of followers but draw little engagement per post.</span></li>
+  </ol>
+</section>
+
+<section id="timeline">
+  <span class="eyebrow">Timeline</span>
+  <h2>Weekly engagement</h2>
+  <div class="chart"><svg id="wk" viewBox="0 0 760 300" role="img" aria-label="Weekly engagement bar chart from week 33 to week 42 of 2026"></svg></div>
+  <ol class="wk-key" id="wkKey"></ol>
+  <p class="legend">Engagement = likes + 2 × reposts + replies + quotes, summed by week of posting (ISO weeks, Monday start). W42 covers 12–15 Oct only. Post counts are skewed toward recent weeks because half the queries asked for the latest posts, so read engagement, not counts.</p>
+</section>
+
+<section id="themes">
+  <span class="eyebrow">What the conversation is about</span>
+  <h2>Share of engagement by theme</h2>
+  <div class="themes" id="themesList">
+    <div class="trow thead"><span>Theme</span><span></span><span style="text-align:right">Share</span><span style="text-align:right">Posts</span></div>
+  </div>
+  <p class="legend">Keyword match on post text (Indonesian and English). A post can match several themes, so shares do not add to 100%. A few viral posts can dominate a theme: “Government priorities (MBG)” is 16 posts.</p>
+</section>
+
+<section id="lenses">
+  <span class="eyebrow">Evidence by lens</span>
+  <h2>Seven lenses on the fires</h2>
+  <div id="lensList" style="display:flex;flex-direction:column;gap:36px"></div>
+</section>
+
+<section id="figures">
+  <span class="eyebrow">Numbers circulating on X</span>
+  <h2>Figures cited in posts</h2>
+  <p class="muted">These are figures as stated in posts, attributed to the source each post names. They were not checked against the original reports.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Figure</th><th>What it describes</th><th>Source named</th><th>Posted by</th></tr></thead>
+    <tbody id="figRows"></tbody>
+  </table></div>
+</section>
+
+<section id="voices">
+  <span class="eyebrow">Who is talking</span>
+  <h2>Accounts that moved the conversation</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Account</th><th>Type</th><th>Posts in sample</th><th>Engagement</th><th>Followers</th></tr></thead>
+    <tbody id="acctRows"></tbody>
+  </table></div>
+  <h3>Top hashtags</h3>
+  <div class="tags" id="tags"></div>
+</section>
+
+<section id="method">
+  <span class="eyebrow">Method and limits</span>
+  <h2>How this was collected</h2>
+  <ul class="plain">
+    <li>Source: TwitterAPI.io advanced search, run 15 Oct 2026, filtered to posts since 1 Aug 2026. Twelve queries covered core terms (karhutla, kebakaran hutan), English terms, hashtags, governance, enforcement, recovery, health and haze, firefighting response, transboundary haze, NGOs, and Papua / food estate.</li>
+    <li>Each query pulled up to three pages of “Top” and three of “Latest” results (about 120 posts per query), de-duplicated to 1,138 posts.</li>
+    <li>This is a sample, not a census. “Top” favours viral posts, “Latest” favours the last two days. Reposts without comment are not included.</li>
+    <li>Themes come from keyword matching, not manual coding, so some posts are misclassified. Quotes are paraphrased; follow the links for full text.</li>
+    <li>Figures in posts are claims. Check them against KLHK/Kemenhut SiPongi, BNPB, Kemenkes and WALHI before reuse.</li>
+  </ul>
+  <h3>Suggested next steps</h3>
+  <ul class="plain">
+    <li>Re-run the same queries weekly to track whether the October wave fades or turns into a sustained accountability campaign.</li>
+    <li>Cross-check the companies named on X (Sinar Mas / PT Bumi Mekar Hijau, Medco / PT Selaras Inti Semesta and others) against the concession and fire tables in the Indonesia Extractives workbook.</li>
+    <li>Hand-code the top 200 posts for stance (blames government, companies, farmers, weather) to replace keyword shares with a firmer measure.</li>
+  </ul>
+</section>
+
+<footer>Compiled 15 Oct 2026 from X posts via TwitterAPI.io. Engagement and follower counts as of collection time.</footer>
+</main>
+
+<script>
+LW.nav("social.html");
+const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?Math.round(n/1e3)+'k':String(n);
+const x=id=>'https://x.com/i/status/'+id;
+
+// Weekly engagement
+const weeks=[["W33","10–16 Aug",1214],["W34","17–23 Aug",748246],["W35","24–30 Aug",396586],["W36","31 Aug–6 Sep",74578],["W37","7–13 Sep",174705],["W38","14–20 Sep",47764],["W39","21–27 Sep",207052],["W40","28 Sep–4 Oct",6534],["W41","5–11 Oct",689624],["W42","12–15 Oct",727674]];
+const ann={W34:"#SaveKalimantan; WALHI: 71% of Kalsel hotspots in concessions",W39:"“Don't stop talking about karhutla” post goes viral",W41:"Jambi & Kalteng outrage; governor's remark",W42:"Palangka Raya red sky; Japan aid halted"};
+(function(){
+  const s=document.getElementById('wk'),W=760,H=300,L=56,R=12,T=36,B=40,max=800000;
+  const cw=(W-L-R)/weeks.length,y=v=>T+(H-T-B)*(1-v/max);let h='';
+  [0,200000,400000,600000,800000].forEach(v=>{h+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`});
+  weeks.forEach((w,i)=>{const bx=L+i*cw+cw*.18,bw=cw*.64,by=y(w[2]);
+    h+=`<rect x="${bx}" y="${by}" width="${bw}" height="${y(0)-by}" fill="${ann[w[0]]?'var(--bar)':'var(--bar2)'}"/>`;
+    h+=`<text x="${bx+bw/2}" y="${H-B+16}" text-anchor="middle">${w[0]}</text><text x="${bx+bw/2}" y="${H-B+30}" text-anchor="middle" style="font-size:9px">${w[1].split('–')[0]}</text>`;});
+  Object.keys(ann).forEach((k,j)=>{const i=weeks.findIndex(w=>w[0]===k),cx=L+i*cw+cw/2,by=y(weeks[i][2]);
+    h+=`<circle cx="${cx}" cy="${by-16}" r="10" fill="var(--ink)"/><text x="${cx}" y="${by-12}" text-anchor="middle" style="fill:var(--surface);font-weight:600">${j+1}</text>`;});
+  document.getElementById('wkKey').innerHTML=Object.keys(ann).map((k,j)=>`<li><b>${j+1}</b> ${k}: ${ann[k]}</li>`).join('');
+  s.innerHTML=h;
+})();
+
+// Themes
+const themes=[["Health: ISPA, breathing",20.4,92],["Government priorities (MBG, Kopdes)",18.3,16],["Volunteers & firefighters",14.6,160],["Malaysia / Singapore / ASEAN",12.8,186],["Clean water & power cuts",9.4,23],["Recovery, restoration, rehabilitation",9.4,106],["“Media silence” complaints",8.4,8],["Orangutans & wildlife",7.9,61],["Governors",7.7,24],["Peat (gambut)",6.2,164],["Oil palm (sawit)",5.6,99],["President Prabowo",5.0,115],["Concessions & companies",4.1,199],["Ministers / Forestry ministry",4.1,77],["Foreign aid refused or halted",3.0,38],["School closures",3.0,48],["El Niño, drought, rain",2.4,62],["Food estate / PSN / Merauke",1.2,104],["Donations",1.2,15],["Arrests, lawsuits, sanctions",0.9,56],["“National disaster” status",0.1,20]];
+const tl=document.getElementById('themesList');
+themes.forEach(([l,s,n])=>{const r=document.createElement('div');r.className='trow';
+  r.innerHTML=`<span class="lbl">${l}</span><span class="track"><span class="fill" style="width:${s/20.4*100}%"></span></span><span class="num">${s.toFixed(1)}%</span><span class="n">${n}</span>`;tl.appendChild(r)});
+
+// Lenses
+const lenses=[
+ {t:"Governance and accountability",chip:"highest reach",
+  d:"Users frame the fires as a failure of leadership. Recurring targets: President Prabowo (who said fires had “dropped far” and compared Indonesia to the Ring of Fire), Forestry Minister Raja Juli Antoni (calls to resign), Kalimantan governors, and the government spokesperson who told neighbours Indonesia also exports oxygen. The DPR pushed for national-disaster status; the coordinating security ministry declined. On 12 Oct the President chaired a limited cabinet meeting and called for a “massive, comprehensive” preventive strategy.",
+  p:[["aurubyverse","8 Oct","81k likes","Furious that fires have burned three months, with nothing on national TV.","2108302225076576451"],
+     ["SalingJagaWarga","9 Oct","15k likes","Central Kalimantan governor answers a karhutla question with a joke.","2108388228734615838"],
+     ["daddyyuki","12 Oct","20k likes","Asks why Japan's firefighting help was stopped halfway, citing Japan's defence ministry.","2109621226696220995"],
+     ["setkabgoid","13 Oct","356 likes","Cabinet Secretariat: 639.23 ha still being handled in six provinces as of 12 Oct.","2109954679971172682"]]},
+ {t:"Corporate responsibility and enforcement",chip:"high volume, lower reach",
+  d:"The case against companies is the most data-heavy strand. WALHI figures dominate: 71% of South Kalimantan hotspots and 74% of Kalimantan hotspots (Jan–Jul) inside concessions, with mining concessions ahead of oil palm in Kalsel. Lists of named firms circulate. Users contrast arrests of two elderly farmers in Jambi with no company named as suspect. Official counts cited: 19 companies held to account, 32 cases from 2023–25 unresolved, 172 cases received by the Attorney General (Jan–Sep).",
+  p:[["cariaeosa","21 Aug","19k likes","Aerial video from 7 July showing forest cleared and burned for oil palm.","2090623807539351611"],
+     ["recehsjaa","20 Aug","8k likes","Cites WALHI Kalsel: 875 hotspots in mining and 32 in oil-palm concessions.","2090238356202635269"],
+     ["BBCIndonesia","29 Sep","149 likes","Two elderly farmers named suspects inside a company concession; no firm charged.","2104899260772716634"],
+     ["indepenSumatera","14 Oct","1.5k likes","Lists five companies with the most smoke-source hotspots, led by a Sinar Mas unit.","2110426921050014016"]]},
+ {t:"Health and daily life",chip:"≈20% of engagement",
+  d:"Posts focus on ISPA among children, school closures, PM2.5 in the berbahaya range, ash on roads, clean-water shortages and rolling blackouts in Kalimantan. Haze reached as far as Bekasi in one widely shared post. Orangutans at the BOS Nyaru Menteng centre were also treated for ISPA.",
+  p:[["rebukanrain","19 Aug","59k likes","Whole of Indonesian Borneo burning; rivers dry, prices up, children short of breath.","2089938907924398580"],
+     ["xeduward","12 Oct","61k likes","Kalimantan resident: firefighters short of gear and people while MBG gets priority.","2109474947534111145"],
+     ["SalingJagaWarga","14 Oct","22k likes","Schools closed for haze, but children must bathe in rivers for lack of water.","2110245521285935254"],
+     ["komisarisnetzen","14 Oct","2k likes","Cites Kemenkes: 283,270 ISPA cases in seven provinces, 63,711 of them toddlers.","2110285526859436033"]]},
+ {t:"Firefighting response",chip:"volunteers in focus",
+  d:"Praise goes to volunteers, Manggala Agni, BPBD and TNI; criticism goes to logistics. Posts describe peat fires that reignite below ground, firefighters said to be unpaid, fuel shortages slowing operations, children with backpack sprayers, and haze grounding water-bombing aircraft. Official messaging cites 64 aircraft and 54,394 personnel.",
+  p:[["imayonaisee","13 Oct","74k likes","Says Kalimantan volunteer firefighters fight 3–6 fires a day without state pay.","2109953055689244854"],
+     ["kompascom","14 Oct","1.5k likes","Two boys volunteer to fight fire in a rubber garden in Ogan Ilir.","2110342513655706052"],
+     ["bpsdmkemendesa","20 Sep","356 likes","Integrated operation: 64 water-bombing aircraft and 54,394 personnel.","2101804881581650145"],
+     ["Beritasatu","11 Oct","446 likes","Tanjung Puting volunteers send an open letter asking for water bombing.","2109226298061250900"]]},
+ {t:"Recovery and restoration",chip:"thin coverage",
+  d:"Recovery talk is mostly about wildlife: 290 animals in care including 96 orangutans (Kemenhut, 8 Oct), and individual rescue stories. The structural thread is about peat: activists link repeat fires to the dissolution of the peat and mangrove restoration agency. Users also suspect burned land is being replanted, pointing to trucks carrying oil-palm and acacia seedlings. Long-term restoration plans barely appear.",
+  p:[["kumparan","30 Aug","24k likes","Weak orangutan “Sampurna” found in oil palm near a Ketapang fire.","2094005418645508100"],
+     ["dodisegrovee","12 Sep","2.8k likes","Greenpeace's Iqbal Damanik ties weak peat recovery to the restoration agency's dissolution.","2098674494927962418"],
+     ["SudutTakKasat","14 Oct","5k likes","Claims acacia seedlings are being planted on fire-damaged land.","2110186099721298124"],
+     ["gardaanimalia","14 Oct","121 likes","Kemenhut: 290 wild animals in care, 96 of them orangutans.","2110263719666106680"]]},
+ {t:"Transboundary haze",chip:"regional",
+  d:"Malaysia closed schools for over two million students on 9 Oct, and Singapore's air worsened before the F1 race. Malaysian users protested at the Indonesian embassy, and a Malaysian MP proposed a transboundary haze act like Singapore's. Indonesian users answer with Greenpeace and Pantau Gambut's 5 Oct report linking Malaysian and Singaporean companies to fire-affected concessions.",
+  p:[["SyedAkramin","7 Oct","25k likes","F1 joke crediting Indonesia with the “haze special effects”.","2107679159862587879"],
+     ["iPopBase","13 Oct","2.5k likes","Malaysia's deputy PM says Indonesia has not replied to an offer of help.","2110010227345281240"],
+     ["NewsBFM","13 Oct","378 likes","Indonesia declines to declare a national disaster, says it can cope.","2109820238674227315"],
+     ["_Rizmaya__","14 Oct","33 likes","#KarhutlaKorporasi: Greenpeace report names Malaysian and Singaporean firms.","2110354762520789199"]]},
+ {t:"Papua and the food estate",chip:"emerging",
+  d:"A smaller strand links fires to land clearing for national strategic projects (PSN), especially the Merauke food estate. Posts recall the 1996 Mega Rice Project and the 1997 fires, and some say Papua's fires are larger than Kalimantan's but get less attention.",
+  p:[["Dandhy_Laksono","22 Aug","973 likes","Traces food-estate clearing from 1996 Kalteng to Papua under three presidents.","2091306316384084375"],
+     ["Mulalt_","12 Sep","115 likes","Eyewitness account of clearing and burning for a PSN project in Wanam, Merauke.","2098790663022375078"],
+     ["InFebriyan128","10 Oct","588 likes","Fires reported in Timika, Merauke and Yahukimo.","2108780730985984455"],
+     ["zhil_arf","15 Oct","132 likes","Argues Papua's fires are bigger than Kalimantan's but ignored.","2110566353211916603"]]}
+];
+const ll=document.getElementById('lensList');
+lenses.forEach(L=>{const d=document.createElement('div');d.className='lens';
+  d.innerHTML=`<div class="head"><h3>${L.t}</h3><span class="chip">${L.chip}</span></div><p>${L.d}</p><div class="posts">${L.p.map(p=>`<div class="post"><div class="who"><span>@${p[0]}</span><span>${p[1]} · ${p[2]}</span></div><p>${p[3]}</p><a href="${x(p[4])}" target="_blank" rel="noopener">View post</a></div>`).join('')}</div>`;
+  ll.appendChild(d)});
+
+// Figures
+const figs=[["283,270","ISPA cases in 7 fire-affected provinces, to 14 Oct","Kemenkes","komisarisnetzen","2110285526859436033"],
+["174,694","ISPA cases, 18 Aug–21 Sep (40,363 toddlers)","Kemenkes","indepenSumatera","2109288621123555531"],
+["140.5 Mt","Carbon released by peat fires by 6 Oct (≈13% of global fire emissions)","Not named","volcaholic1","2109960271192273381"],
+["71%","Share of South Kalimantan hotspots inside concessions","WALHI Kalsel","recehsjaa","2090238356202635269"],
+["74%","Share of Kalimantan hotspots in concessions, Jan–Jul (25,524 of 34,262)","WALHI","FaiNomady","2091512999546933391"],
+["~202,000 ha","Burned in the first seven months, up ~117% on 2023","WALHI","walhinasional","2093637341999145040"],
+["72,798 ha","Burned area as of 22 Aug","BNPB","magdaleneid","2095825872104444333"],
+["639.23 ha","Area still being handled in six provinces, 12 Oct","Cabinet Secretariat","setkabgoid","2109954679971172682"],
+["335","Concessions indicated burned; 3,800 national hotspots","Environment Minister visit, Riau","danskuss","2091147686040985680"],
+["172","Karhutla cases received by the Attorney General, Jan–Sep","Kejaksaan Agung","ErikaWidiy5b4i","2108484999582470174"],
+["19 / 32","Companies held to account / unresolved 2023–25 cases","KLH / BPLH","kumparan","2094700536968954053"],
+["290","Wild animals in care, incl. 96 Bornean orangutans (to 8 Oct)","Kemenhut","gardaanimalia","2110263719666106680"],
+["64 / 54,394","Water-bombing aircraft / joint personnel deployed","Government","bpsdmkemendesa","2101804881581650145"],
+["2M+","Malaysian students kept home on 9 Oct","Bloomberg","business","2108431046370836871"]];
+document.getElementById('figRows').innerHTML=figs.map(f=>`<tr><td class="num">${f[0]}</td><td>${f[1]}</td><td>${f[2]}</td><td><a href="${x(f[4])}" target="_blank" rel="noopener">@${f[3]}</a></td></tr>`).join('');
+
+// Accounts
+const accts=[["indepenSumatera","Regional activist",22,172395,65724],["SalingJagaWarga","Citizen-solidarity account",4,109570,20653],["oqforwhat","Personal account",4,251581,4259],["rkiveforlive","Personal account",2,206445,5189],["haixensen","Personal account",1,173568,11840],["rebukanrain","Individual",4,161834,8394],["BBCIndonesia","Media",5,80982,1704792],["kumparan","Media",6,55028,1372989],["kompascom","Media",37,20940,8053697],["walhinasional","NGO",2,1490,185776]];
+document.getElementById('acctRows').innerHTML=accts.map(a=>`<tr><td><a href="https://x.com/${a[0]}" target="_blank" rel="noopener">@${a[0]}</a></td><td>${a[1]}</td><td class="num">${a[2]}</td><td class="num">${a[3].toLocaleString('en-US')}</td><td class="num">${a[4].toLocaleString('en-US')}</td></tr>`).join('');
+
+// Hashtags
+const tags=[["#karhutla",166],["#karhutlakorporasi",96],["#prayforindonesia",37],["#indonesia",36],["#kalimantan",31],["#prayforkalimantan",28],["#kabutasap",28],["#haze",25],["#alleyesonindonesia",21],["#jagaindonesia",18],["#palangkaraya",16],["#kalimantantengah",16],["#malaysia",14],["#orangutan",13],["#singapore",12],["#prayforpapua",7]];
+document.getElementById('tags').innerHTML=tags.map(t=>`<span class="tag">${t[0]} <em>${t[1]}</em></span>`).join('');
+</script>
+
+</body>
+</html>
