@@ -30,7 +30,7 @@
   const setQuery = (q) => (SHELL ? SHELL.setQuery(document.documentElement.dataset.page, q) : history.replaceState(null, "", q));
   if (SHELL) document.addEventListener("click", (e) => {
     const a = e.target.closest && e.target.closest("a[href]");
-    if (a && /^(index|companies|groups|map|forest|fires|social)\.html/.test(a.getAttribute("href"))) { e.preventDefault(); go(a.getAttribute("href")); }
+    if (a && /^(index|companies|groups|map|forest|fires|social|x-[a-z]+)\.html/.test(a.getAttribute("href"))) { e.preventDefault(); go(a.getAttribute("href")); }
   });
 
   function nav(active) {
@@ -41,7 +41,7 @@
     const el = document.createElement("header");
     el.className = "nav";
     el.innerHTML = `<div class="brand"><span class="brand-mark" aria-hidden="true"></span>Indonesia Land Watch</div>
-      <nav>${pages.map(([h, t]) => `<a href="${h}"${h === active ? ' aria-current="page"' : ""}>${t}</a>`).join("")}</nav>
+      <nav>${pages.map(([h, t]) => `<a href="${h}"${h === active || (h === "social.html" && active.startsWith("x-")) ? ' aria-current="page"' : ""}>${t}</a>`).join("")}</nav>
       <span class="stamp">Fires ${s.fire_start || ""} → ${s.fire_end || ""} · built ${s.built || ""}</span>`;
     document.body.prepend(el);
   }
