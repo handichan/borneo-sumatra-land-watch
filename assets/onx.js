@@ -5,20 +5,20 @@
   const xurl = (id) => "https://x.com/i/status/" + id;
   const START = Date.UTC(2026, 8, 15); // daily series start: 15 Sep 2026
   const day = (i) => new Date(START + i * 864e5);
-  const dfmt = (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  const dfmt = (d) => d.getUTCDate() + " " + "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ")[d.getUTCMonth()];
 
   // Sparklines are engagement by day (topics) or by week (karhutla), as collected; refreshed with each topic run.
   const TOPICS = [
-    { id: "karhutla", href: "social.html", name: "Karhutla", kicker: "Forest & land fires", c: "--fire", eng: 3.66e6,
-      spark: [791, 681540, 200799, 332201, 270696, 75352, 278928, 8484, 423155, 1386792] },
-    { id: "mbg", href: "x-mbg.html", name: "MBG", kicker: "Free school meals", c: "--quarry", eng: 1439279,
-      spark: [39211,12346,1831,43130,139196,0,18972,220715,74235,74730,1112,9311,34660,25966,197773,0,163731,27249,4282,1109,37891,27377,4409,115653,10368,3735,69217,40239,13573,18424,470,5815,2549] },
-    { id: "kopdes", href: "x-kopdes.html", name: "Kopdes / KDMP", kicker: "Village cooperatives", c: "--palm", eng: 176128,
-      spark: [1208,18795,39694,75,12,612,74,680,944,57,677,283,1798,235,1861,141,5799,0,3420,0,0,533,0,27276,4,12,0,3382,471,37564,28234,2211,76] },
-    { id: "bbm", href: "x-bbm.html", name: "Krisis BBM", kicker: "Fuel shortages", c: "--coal", eng: 151303,
-      spark: [47096,0,41,0,187,9,0,0,0,232,0,0,0,0,0,0,75,0,0,0,25,0,21,202,0,3446,0,2913,4084,20876,36537,35429,130] },
-    { id: "pasar", href: "x-pasar.html", name: "MSCI & IHSG", kicker: "Markets & rupiah", c: "--pulp", eng: 179603,
-      spark: [0,794,382,335,0,0,132,1542,0,0,0,0,0,93,868,0,0,0,0,0,0,0,0,19,0,0,0,13280,1147,121,2443,156625,1822] },
+    { id: "karhutla", href: "social.html", name: "Karhutla", kicker: "Forest & land fires", c: "--fire", eng: 2.70e6,
+      spark: [53, 756747, 158188, 63899, 196204, 92490, 221127, 23665, 78354, 1112882] },
+    { id: "mbg", href: "x-mbg.html", name: "MBG", kicker: "Free school meals", c: "--quarry", eng: 1757904,
+      spark: [40756,33744,5355,53122,165652,0,30684,226808,83677,76093,3602,113276,38403,27261,229606,4484,163731,28139,4505,1109,38039,27378,4409,164149,11694,8218,69256,44295,13932,35169,915,7533,2910] },
+    { id: "kopdes", href: "x-kopdes.html", name: "Kopdes / KDMP", kicker: "Village cooperatives", c: "--palm", eng: 307929,
+      spark: [1208,18836,39694,75,12,612,74,680,944,59,677,283,1949,235,1861,141,5798,23942,3420,0,0,533,0,27278,4,12,88785,3407,647,38605,30299,17675,184] },
+    { id: "bbm", href: "x-bbm.html", name: "Krisis BBM", kicker: "Fuel shortages", c: "--coal", eng: 339731,
+      spark: [47234,97,57,0,187,9,0,0,0,232,0,0,0,0,28972,0,75,0,0,0,25,0,40,202,0,3455,0,2913,4586,22599,143519,85024,505] },
+    { id: "pasar", href: "x-pasar.html", name: "MSCI & IHSG", kicker: "Markets & rupiah", c: "--pulp", eng: 383889,
+      spark: [0,794,382,335,22,0,210,1542,29,40,148,93897,0,232,868,0,0,0,0,0,29811,0,0,19,0,0,0,14721,1493,314,5917,226126,6989] },
   ];
 
   function spark(vals) {
@@ -55,7 +55,7 @@
       h += `<circle class="pk" cx="${cx}" cy="${cy}" r="4"/><circle cx="${cx}" cy="${Math.max(cy - 18, 12)}" r="9" fill="var(--ink)"/><text x="${cx}" y="${Math.max(cy - 18, 12) + 4}" text-anchor="middle" style="fill:var(--surface);font:600 11px var(--font-data)">${j + 1}</text>`; });
     const cw = (W - L - R) / n;
     series.forEach((v, i) => { h += `<rect class="hov" data-i="${i}" x="${x(i) - cw / 2}" y="${T}" width="${cw}" height="${H - T - B}"/>`; });
-    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily engagement, 15 Sep to 17 Oct 2026">${h}</svg>`;
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily engagement, ${dfmt(day(0))} to ${dfmt(day(n))} 2026">${h}</svg>`;
     if (window.LW && LW.tip) {
       el.addEventListener("mousemove", (e) => { const r = e.target.closest && e.target.closest(".hov"); if (!r) return LW.tip(null);
         const i = +r.dataset.i; LW.tip(`<b>${dfmt(day(i))}</b><br>${series[i].toLocaleString("en-US")} engagement`, e); });
@@ -71,7 +71,7 @@
     root.innerHTML = `
     <section class="x-hero">
       <div class="intro">
-        <span class="eyebrow tc">On X · ${esc(D.kicker)} · 15 Sep – 17 Oct 2026</span>
+        <span class="eyebrow tc">On X · ${esc(D.kicker)} · ${dfmt(day(0))} – ${dfmt(day(D.series.length - 1))} 2026</span>
         <h1>${esc(D.title)}</h1>
         <p class="lede">${esc(D.lede)}</p>
       </div>
