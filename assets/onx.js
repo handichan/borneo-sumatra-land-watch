@@ -9,16 +9,16 @@
 
   // Sparklines are engagement by day (topics) or by week (karhutla), as collected; refreshed with each topic run.
   const TOPICS = [
-    { id: "karhutla", href: "social.html", name: "Karhutla", kicker: "Forest & land fires", c: "--fire", eng: 4118471,
-      spark: [18, 500, 764814, 266146, 363783, 167866, 228047, 87855, 24653, 346397, 1868392] },
-    { id: "mbg", href: "x-mbg.html", name: "MBG", kicker: "Free school meals", c: "--quarry", eng: 2144368,
-      spark: [75571,34507,10123,122216,165691,26947,37727,227454,114603,87279,12533,116815,38399,29751,248396,4620,164030,31681,4505,5450,92258,80188,4407,166264,13671,8565,70231,44417,40379,35366,12969,10691,6664] },
-    { id: "kopdes", href: "x-kopdes.html", name: "Kopdes / KDMP", kicker: "Village cooperatives", c: "--palm", eng: 473401,
-      spark: [1208,18842,48663,174,12,612,125,680,944,59,677,442,1949,234,1860,141,5796,24141,3419,0,0,533,271,27275,4,12,88886,40550,47871,50355,39193,60323,8150] },
-    { id: "bbm", href: "x-bbm.html", name: "Krisis BBM", kicker: "Fuel shortages", c: "--coal", eng: 732082,
-      spark: [48197,4969,75,112,187,19,3518,32,151865,24730,3607,0,1103,0,28968,0,155,0,0,0,25,64,40,202,0,3450,1,3238,56488,26576,219867,115053,39541] },
-    { id: "pasar", href: "x-pasar.html", name: "MSCI & IHSG", kicker: "Markets & rupiah", c: "--pulp", eng: 606810,
-      spark: [84,794,384,2998,22,16,1557,1556,29,40,171,93897,0,232,911,52,0,119,0,0,64864,0,0,19,0,0,0,15602,1502,339,7728,325116,88778] },
+    { id: "karhutla", href: "social.html", name: "Karhutla", kicker: "Forest & land fires", c: "--fire", eng: 4488456,
+      spark: [0, 3, 457, 891876, 317344, 563653, 167823, 360817, 242135, 6366, 388293, 1549689] },
+    { id: "mbg", href: "x-mbg.html", name: "MBG", kicker: "Free school meals", c: "--quarry", eng: 2173528,
+      spark: [83059,34504,15511,122214,165676,26947,38445,236940,114602,87279,13172,116815,38399,29751,248401,5022,164030,31682,4504,5487,92484,80198,4406,166264,13667,8565,70268,44416,40383,35678,14063,12680,7601,415] },
+    { id: "kopdes", href: "x-kopdes.html", name: "Kopdes / KDMP", kicker: "Village cooperatives", c: "--palm", eng: 486947,
+      spark: [1208,18839,48663,174,12,612,125,680,944,59,677,643,1949,234,1859,141,5796,24139,3421,0,0,533,271,27275,4,12,88886,40550,48643,50398,40257,60680,11856,7407] },
+    { id: "bbm", href: "x-bbm.html", name: "Krisis BBM", kicker: "Fuel shortages", c: "--coal", eng: 854804,
+      spark: [48200,100147,75,112,629,19,3518,32,151865,24730,4748,0,1104,0,28969,0,155,0,0,0,25,64,110,202,0,3450,1,6596,56852,26592,221512,122810,51932,355] },
+    { id: "pasar", href: "x-pasar.html", name: "MSCI & IHSG", kicker: "Markets & rupiah", c: "--pulp", eng: 662409,
+      spark: [84,794,384,2998,22,16,1557,1556,29,58,171,93897,0,232,911,52,0,119,0,0,64864,0,0,208,0,0,0,15658,1549,351,9827,335014,128364,3694] },
   ];
 
   function spark(vals) {
