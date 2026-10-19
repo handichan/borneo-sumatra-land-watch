@@ -9,8 +9,8 @@
 <link rel="stylesheet" href="assets/app.css">
 <script src="data/snapshot.js"></script>
 <script src="assets/common.js?v=20261017"></script>
-<link rel="stylesheet" href="assets/onx.css?v=2026101804">
-<script src="assets/onx.js?v=2026101804"></script>
+<link rel="stylesheet" href="assets/onx.css?v=2026101910">
+<script src="assets/onx.js?v=2026101910"></script>
 </head>
 <body>
 <main class="wrap social" data-topic="karhutla">
@@ -46,10 +46,10 @@
 
 <section id="timeline">
   <span class="eyebrow">Timeline</span>
-  <h2>Weekly engagement</h2>
-  <div class="chart"><svg id="wk" viewBox="0 0 760 300" role="img" aria-label="Weekly engagement bar chart from week 31 to week 43 of 2026"></svg></div>
+  <h2>Daily engagement</h2>
+  <div class="chart area" id="k-area"></div>
   <ol class="wk-key" id="wkKey"></ol>
-  <p class="legend">Engagement = likes + 2 × reposts + replies + quotes, summed by week of posting (ISO weeks, Monday start). W43 covers 19 Oct only. Post counts are skewed toward recent weeks because half the queries asked for the latest posts, so read engagement, not counts.</p>
+  <p class="legend">Engagement = likes + 2 × reposts + replies + quotes, summed by day of posting (WIB). Hover a day for its total. Post counts are skewed toward recent days because half the queries asked for the latest posts, so read engagement, not counts.</p>
 </section>
 
 <section id="themes">
@@ -115,20 +115,15 @@ ONX.subnav("karhutla");
 const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?Math.round(n/1e3)+'k':String(n);
 const x=id=>'https://x.com/i/status/'+id;
 
-// Weekly engagement
-const weeks=[["W31","2 Aug",2],["W32","3–9 Aug",138],["W33","10–16 Aug",840],["W34","17–23 Aug",797499],["W35","24–30 Aug",306153],["W36","31 Aug–6 Sep",292971],["W37","7–13 Sep",116374],["W38","14–20 Sep",334295],["W39","21–27 Sep",227461],["W40","28 Sep–4 Oct",14234],["W41","5–11 Oct",369226],["W42","12–18 Oct",1801411],["W43","19 Oct",518]];
-const ann={W34:"#SaveKalimantan; WALHI: 71% of Kalsel hotspots in concessions",W39:"“Don't stop talking about karhutla” post goes viral",W41:"Jambi & Kalteng outrage; governor's remark",W42:"Haze reaches KL, Jakarta and Ambon; Bromo deaths; Singapore names seven firms; Papua fires; KPK BNPB-fund arrests; #AllEyesOnIndonesia"};
+// Daily engagement (WIB). The "daily" line is rewritten by build/scripts/x_stats.py; notes are hand-placed by date.
+const daily={"start":"2026-08-01","values":[0,2,10,0,110,0,18,0,0,5,96,739,0,0,0,0,0,93702,285700,391351,5036,19133,2577,9911,1979,1581,155310,959,62331,74082,2220,9919,151,25693,92217,162655,116,202,2,8840,18709,895,87707,19,117,79560,60115,45350,75,111486,37592,206180,185,0,118,26,20952,0,0,11657,0,0,62,2372,143,16,22300,29,11201,132144,63608,139928,199237,28949,178812,194539,711455,272747,215672,518]};
+const notes=[{d:"2026-08-20",t:"#SaveKalimantan; WALHI: 71% of Kalsel hotspots in concessions"},{d:"2026-09-21",t:"“Don't stop talking about karhutla” post goes viral"},{d:"2026-10-09",t:"Jambi & Kalteng outrage; governor's remark"},{d:"2026-10-16",t:"Peak day: haze reaches KL, Jakarta and Ambon; Bromo deaths; Singapore names seven firms; Papua fires; KPK BNPB-fund arrests; #AllEyesOnIndonesia"}];
 (function(){
-  const s=document.getElementById('wk'),W=760,H=300,L=56,R=12,T=36,B=40,max=2000000;
-  const cw=(W-L-R)/weeks.length,y=v=>T+(H-T-B)*(1-v/max);let h='';
-  [0,500000,1000000,1500000,2000000].forEach(v=>{h+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`});
-  weeks.forEach((w,i)=>{const bx=L+i*cw+cw*.18,bw=cw*.64,by=y(w[2]);
-    h+=`<rect x="${bx}" y="${by}" width="${bw}" height="${y(0)-by}" fill="${ann[w[0]]?'var(--bar)':'var(--bar2)'}"/>`;
-    h+=`<text x="${bx+bw/2}" y="${H-B+16}" text-anchor="middle">${w[0]}</text><text x="${bx+bw/2}" y="${H-B+30}" text-anchor="middle" style="font-size:9px">${w[1].split('–')[0]}</text>`;});
-  Object.keys(ann).forEach((k,j)=>{const i=weeks.findIndex(w=>w[0]===k),cx=L+i*cw+cw/2,by=y(weeks[i][2]);
-    h+=`<circle cx="${cx}" cy="${by-16}" r="10" fill="var(--ink)"/><text x="${cx}" y="${by-12}" text-anchor="middle" style="fill:var(--surface);font-weight:600">${j+1}</text>`;});
-  document.getElementById('wkKey').innerHTML=Object.keys(ann).map((k,j)=>`<li><b>${j+1}</b> ${k}: ${ann[k]}</li>`).join('');
-  s.innerHTML=h;
+  const idx=d=>Math.round((Date.parse(d+"T00:00:00Z")-Date.parse(daily.start+"T00:00:00Z"))/864e5);
+  const N=notes.map(n=>({i:idx(n.d),t:n.t})).filter(n=>n.i>=0&&n.i<daily.values.length);
+  ONX.area(document.getElementById('k-area'),daily.values,N,daily.start);
+  const df=d=>new Date(d+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",timeZone:"UTC"});
+  document.getElementById('wkKey').innerHTML=notes.filter((n,j)=>N.some(m=>m.t===n.t)).map((n,j)=>`<li><b>${j+1}</b> ${df(n.d)}: ${n.t}</li>`).join('');
 })();
 
 // Themes

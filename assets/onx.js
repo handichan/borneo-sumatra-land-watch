@@ -7,10 +7,10 @@
   const day = (i) => new Date(START + i * 864e5);
   const dfmt = (d) => d.getUTCDate() + " " + "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ")[d.getUTCMonth()];
 
-  // Sparklines are engagement by day (topics) or by week (karhutla), as collected; refreshed with each topic run.
+  // Sparklines are engagement by day, as collected; karhutla from x_stats.py, the others from x_topics_stats.py.
   const TOPICS = [
     { id: "karhutla", href: "social.html", name: "Karhutla", kicker: "Forest & land fires", c: "--fire", eng: 4261122,
-      spark: [2, 138, 840, 797499, 306153, 292971, 116374, 334295, 227461, 14234, 369226, 1801411, 518] },
+      spark: [0,2,10,0,110,0,18,0,0,5,96,739,0,0,0,0,0,93702,285700,391351,5036,19133,2577,9911,1979,1581,155310,959,62331,74082,2220,9919,151,25693,92217,162655,116,202,2,8840,18709,895,87707,19,117,79560,60115,45350,75,111486,37592,206180,185,0,118,26,20952,0,0,11657,0,0,62,2372,143,16,22300,29,11201,132144,63608,139928,199237,28949,178812,194539,711455,272747,215672,518] },
     { id: "mbg", href: "x-mbg.html", name: "MBG", kicker: "Free school meals", c: "--quarry", eng: 2346636,
       spark: [84545,34724,32830,126947,165675,26947,44451,237029,114589,101295,13172,116814,38399,29747,248399,5103,164031,31896,18270,5629,94211,144548,4406,166260,13664,8564,70490,44728,41356,35705,16636,15633,9534,40409] },
     { id: "kopdes", href: "x-kopdes.html", name: "Kopdes / KDMP", kicker: "Village cooperatives", c: "--palm", eng: 522197,
@@ -41,7 +41,9 @@
     if (cur && cur.scrollIntoView && el.scrollWidth > el.clientWidth) el.scrollLeft = cur.offsetLeft - 16;
   }
 
-  function area(el, series, notes) {
+  // start: first day of the series as "YYYY-MM-DD" (default 15 Sep 2026); notes: [{i, t}] by day index.
+  function area(el, series, notes, start) {
+    const base = start ? Date.parse(start + "T00:00:00Z") : START, day = (i) => new Date(base + i * 864e5);
     const W = 760, H = 260, L = 50, R = 14, T = 30, B = 30, n = series.length - 1;
     const max = Math.max(...series), step = Math.pow(10, Math.floor(Math.log10(max || 1)));
     const top = Math.ceil(max / step / 2) * step * 2 || 1;
