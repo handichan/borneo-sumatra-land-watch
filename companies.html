@@ -122,5 +122,17 @@ document.getElementById("q").oninput = (e) => { q = e.target.value; renderTable(
 renderTable();
 select(selId && COS.some((c) => c.id === selId) ? selId : rows()[0].id);
 </script>
+<script>(function () {
+  // This copy is archived; the site moved to Vercel on 20 Oct 2026.
+  var b = document.createElement("div");
+  b.id = "moved-banner"; b.setAttribute("role", "status");
+  b.style.cssText = "flex:none;background:#b45309;color:#fff;font:600 15px/1.45 system-ui,-apple-system,'Segoe UI',Arial,sans-serif;padding:10px 16px;text-align:center";
+  var a = document.createElement("a");
+  a.href = "https://borneo-sumatra-land-watch.vercel.app/" + (location.pathname.split("/").pop() || "") + location.search + location.hash;
+  a.textContent = "borneo-sumatra-land-watch.vercel.app";
+  a.style.cssText = "color:#fff;text-decoration:underline";
+  b.append("This site has moved to ", a, ". This copy stopped updating on 20 Oct 2026 at 18:24 WIB.");
+  document.body.prepend(b);
+})();</script>
 </body>
 </html>

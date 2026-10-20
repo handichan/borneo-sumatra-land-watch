@@ -1,3 +1,5 @@
+**Moved:** this site now lives at https://borneo-sumatra-land-watch.vercel.app. This repository is archived and its data stopped updating on 20 Oct 2026 at 18:24 WIB.
+
 # Indonesia Land Watch
 
 Static dashboard of companies holding land concessions across Indonesia — palm oil, pulp & paper, other agriculture & plantations, natural-forest logging, coal, metal mining and quarrying/cement — in (Kalimantan, Sumatra, Papua, Sulawesi, Java, Nusa Tenggara, Maluku): owners, listings, revenue, mapped licence boundaries, forest-area use permits (PPKH), tree cover loss, NASA FIRMS fire detections and modelled haze.

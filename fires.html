@@ -119,5 +119,17 @@ const worst = [...window.AQ.cells].sort((a, b) => b[2] - a[2]).slice(0, 10);
 document.getElementById("tb-aq").innerHTML = `<thead><tr><th>Cell centre</th><th class="n">PM2.5</th><th class="n">AOD</th><th class="n">US AQI</th><th>Category</th></tr></thead><tbody>` +
   worst.map((c) => { const k = LW.pmCat(c[2]); return `<tr><td class="mono">${c[0].toFixed(1)}°, ${c[1].toFixed(1)}°</td><td class="n">${Math.round(c[2])}</td><td class="n">${c[4]}</td><td class="n">${c[6]}</td><td><span class="chip"><i class="dot" style="background:${k[2]}"></i>${k[1]}</span></td></tr>`; }).join("") + "</tbody>";
 </script>
+<script>(function () {
+  // This copy is archived; the site moved to Vercel on 20 Oct 2026.
+  var b = document.createElement("div");
+  b.id = "moved-banner"; b.setAttribute("role", "status");
+  b.style.cssText = "flex:none;background:#b45309;color:#fff;font:600 15px/1.45 system-ui,-apple-system,'Segoe UI',Arial,sans-serif;padding:10px 16px;text-align:center";
+  var a = document.createElement("a");
+  a.href = "https://borneo-sumatra-land-watch.vercel.app/" + (location.pathname.split("/").pop() || "") + location.search + location.hash;
+  a.textContent = "borneo-sumatra-land-watch.vercel.app";
+  a.style.cssText = "color:#fff;text-decoration:underline";
+  b.append("This site has moved to ", a, ". This copy stopped updating on 20 Oct 2026 at 18:24 WIB.");
+  document.body.prepend(b);
+})();</script>
 </body>
 </html>
