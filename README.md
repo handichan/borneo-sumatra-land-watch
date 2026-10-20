@@ -1,4 +1,4 @@
-**Moved:** this site now lives at https://borneo-sumatra-land-watch.vercel.app. This repository is archived and its data stopped updating on 20 Oct 2026 at 18:24 WIB.
+**Moved:** this site now lives at https://karhutla-2026.vercel.app. This repository is archived and its data stopped updating on 20 Oct 2026 at 18:24 WIB.
 
 # Indonesia Land Watch
 
